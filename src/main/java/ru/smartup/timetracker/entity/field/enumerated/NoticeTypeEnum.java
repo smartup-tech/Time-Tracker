@@ -1,0 +1,20 @@
+package ru.smartup.timetracker.entity.field.enumerated;
+
+public enum NoticeTypeEnum {
+    ADMIN_ADDED,
+    ADMIN_REMOVED,
+    APPROVAL_REQUIRED,
+    HOURS_REJECTED,
+    FREEZE_CANCEL,
+    UN_FREEZE,
+    FREEZE_ERROR,
+    FREEZE_PREPARE,
+    FREEZE_SUCCESS,
+    PASSWORD_RECOVERY,
+    PASSWORD_RESET,
+    PASSWORD_UPDATE,
+    PROJECT_UPDATE,
+    PROJECT_ROLE_CHANGE,
+    PROJECT_ROLE_GRANTED,
+    REGISTER_NEW_USER
+}

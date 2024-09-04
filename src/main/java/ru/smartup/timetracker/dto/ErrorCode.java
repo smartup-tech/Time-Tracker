@@ -1,0 +1,29 @@
+package ru.smartup.timetracker.dto;
+
+public enum ErrorCode {
+    //validation errors
+    NOT_VALID_DATA,
+    NOT_VALID_OLD_PWD,
+    NOT_VALID_DATE,
+    RESOURCE_NOT_FOUND,
+
+    //auth and permissions
+    INVALID_CREDENTIALS,
+    ACCESS_DENIED,
+    LOCKED,
+    INVALID_PASSWORD_RECOVERY_TOKEN,
+
+    //business errors
+    NOT_UNIQUE_POSITION_NAME,
+    NOT_UNIQUE_USER_NAME,
+    NOT_UNIQUE_PROJECT_NAME,
+    NOT_UNIQUE_TASK_NAME,
+    NOT_PROCESSED_TRACK_UNITS_FOR_USER,
+    NOT_PROCESSED_TRACK_UNITS_FOR_PROJECT,
+    NOT_PROCESSED_TRACK_UNITS_FOR_TASK,
+    RELATED_ENTITIES_FOUND_FOR_POSITION,
+    RELATED_ENTITIES_FOUND_FOR_USER,
+
+    //errors with database
+    DB_ERROR
+}

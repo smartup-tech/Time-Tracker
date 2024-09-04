@@ -1,0 +1,32 @@
+# overridden properties for local env
+spring:
+  jpa:
+    show-sql: true
+  mail:
+    protocol: smtp
+    host: localhost
+    port: 8086
+    username: ""
+    password: ""
+    properties:
+      mail:
+        smtp:
+          starttls:
+            enable: false
+            required: false
+        debug: true
+
+logging:
+  level:
+    org:
+      springframework:
+        jdbc:
+          core: TRACE
+
+token:
+  registration:
+    link: http://localhost:5173/set-password?token=
+    ttl: 86400 # 24 hours
+  recovery:
+    link: http://localhost:5173/reset-password?token=
+    ttl: 3600 # 1 hour

@@ -1,0 +1,56 @@
+version: "3.9"
+
+services:
+  db:
+    image: postgres:15.0
+    container_name: timetracker-db
+    environment:
+      POSTGRES_DB: "timetracker"
+      POSTGRES_USER: "timetracker"
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - timetracker_data_volume:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    expose:
+      - "5432"
+    networks:
+      - timetracker-network
+    restart: on-failure
+
+  app:
+    # Option 1: Use this if you have created an image (../build-image.sh)
+    #image: time-tracker-backend
+    
+    # Option 2: Or build an image
+    build:
+      context: ../../
+      dockerfile: ./ops-tools/docker/Dockerfile
+    container_name: timetracker-app
+    environment:
+      SPRING_PROFILE: "local"
+      FLYWAY_DB_URL: "jdbc:postgresql://db:5432/timetracker"
+      FLYWAY_DB_USER: "timetracker"
+      FLYWAY_DB_PASSWORD: ${DB_PASSWORD}
+      DATASOURCE_DB_URL: "jdbc:postgresql://db:5432/timetracker"
+      DATASOURCE_DB_USER: "timetracker"
+      DATASOURCE_DB_PASSWORD: ${DB_PASSWORD}
+      EMAIL_USERNAME: ${EMAIL_NAME}
+      EMAIL_PASSWORD: ${EMAIL_PASSWORD}
+      ALLOWED_ORIGIN: "http://localhost:8082"
+      DOMAIN_NAME: 'timetracker'
+    ports:
+      - "8080:8080"
+    depends_on:
+      - "db"
+    networks:
+      - timetracker-network
+
+volumes:
+  timetracker_data_volume:
+    driver: local
+
+networks:
+  timetracker-network:
+    driver: bridge
+

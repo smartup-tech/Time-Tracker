@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+</head>
+<body style="margin: 0; padding: 0">
+<div style="font-family: Helvetica, Arial, sans-serif; font-size: 14px; padding: 36px 16px 60px; background: #f2f4f6">
+    <div style="width: 100%; max-width: 600px; margin: 0 auto;">
+        <table border="0" cellspacing="0" cellpadding="0" width="100%">
+            <tbody>
+            <tr>
+                <td style="padding: 24px 0;" align="center">
+                    <img src="https://static.tildacdn.com/tild3761-6337-4832-b735-336532316433/signature4_logo.png" width="120"/>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+    <div style="width: 100%; max-width: 600px; margin: 0 auto; border-radius: 4px; background: #ffffff;">
+        <table border="0" cellspacing="0" cellpadding="0" width="100%">
+            <tbody>
+            <tr>
+                <td style="padding: 36px;" align="left">
+                    Здравствуйте!
+                    <br/>
+                    <br/>
+                    Предупреждаем Вас о временном снятии блокировки <span th:text="${unfreezeTimestamp}"></span>.
+                    <br/>
+                    <br/>
+                    Пожалуйста, зарегестрируйте рабочие часы до <span th:text="${freezeTimestamp}"></span>.
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+</body>
+</html>

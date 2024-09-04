@@ -1,0 +1,8 @@
+# overridden properties for dev env
+spring:
+  jpa:
+    show-sql: false
+  mail:
+    properties:
+      mail:
+        debug: false

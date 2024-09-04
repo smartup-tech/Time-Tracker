@@ -1,0 +1,74 @@
+# default properties
+spring:
+  profiles:
+    active: ${SPRING_PROFILE:local}
+  jackson:
+    default-property-inclusion: USE_DEFAULTS
+  flyway:
+    url: ${FLYWAY_DB_URL:jdbc:postgresql://localhost:5432/timetracker}
+    user: ${FLYWAY_DB_USER:timetracker}
+    password: ${FLYWAY_DB_PASSWORD:timetracker}
+  datasource:
+    url: ${DATASOURCE_DB_URL:jdbc:postgresql://localhost:5432/timetracker}
+    username: ${DATASOURCE_DB_USER:timetracker}
+    password: ${DATASOURCE_DB_PASSWORD:timetracker}
+    hikari:
+      data-source-properties:
+        reWriteBatchedInserts: true
+  jpa:
+    show-sql: false
+    open-in-view: false
+    properties:
+      hibernate.format_sql: true
+  mvc:
+    pathmatch:
+      matching-strategy: ANT_PATH_MATCHER
+  mail:
+    protocol: smtps
+    host: smtp.gmail.com
+    port: 465
+    username: ${EMAIL_USERNAME}
+    password: ${EMAIL_PASSWORD}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+            required: true
+          connectiontimeout: 5000
+          timeout: 5000
+          writetimeout: 5000
+        debug: false
+  thymeleaf:
+    prefix: classpath:/mail/template/
+    suffix: .html
+    mode: HTML
+    encoding: UTF-8
+
+server:
+  servlet:
+    context-path: /
+    session:
+      cookie:
+        name: APP_SESSION_ID
+
+cors:
+  allowedOrigin: ${ALLOWED_ORIGIN:http://localhost:8082}
+
+schedule:
+  notice:
+    start-hour: 0
+    fixed-delay: 3600
+  freeze:
+    timezone: Europe/Moscow
+    fixedTimeFreeze: 86_399 # 23:59:59
+    dayToUnfreeze: 0
+
+token:
+  registration:
+    link: http://${DOMAIN_NAME}/set-password?token=
+    ttl: 86400 # 24 hours
+  recovery:
+    link: http://${DOMAIN_NAME}/reset-password?token=
+    ttl: 3600 # 1 hour

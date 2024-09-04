@@ -1,0 +1,9 @@
+# overridden properties for prod env
+spring:
+  jpa:
+    show-sql: false
+  mail:
+    properties:
+      mail:
+        debug: false
+
