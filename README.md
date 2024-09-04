@@ -16,8 +16,8 @@ Timetracker - сервис учета рабочего времени. Прод�
 
 ### Репозитории
 Timetracker - это клиент-серверное приложение с двумя репозиториями:
-- [Timetracker-UI](https://gitlab.smartup.ru/time-tracker-project/time-tracker-ui "Timetracker-UI")
-- [Timetracker-BE](https://gitlab.smartup.ru/time-tracker-project/time-tracker "Timetracker-BE")
+- [Timetracker-UI](https://github.com/smartup-tech/Time-Tracker-UI "Timetracker-UI")
+- [Timetracker-BE](https://github.com/smartup-tech/Time-Tracker "Timetracker-BE")
 
 #### Аналоги
 [BigTime Tracking Software](https://www.bigtime.net/features/time-and-expense-tracking-software/)
