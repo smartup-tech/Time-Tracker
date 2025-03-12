@@ -5,9 +5,10 @@ import org.springframework.stereotype.Service;
 import ru.smartup.timetracker.core.lock.LockManager;
 import ru.smartup.timetracker.core.lock.LockNames;
 import ru.smartup.timetracker.dto.freeze.request.FreezeDateDtoRequest;
+import ru.smartup.timetracker.entity.Employee;
 import ru.smartup.timetracker.entity.FreezeRecord;
 import ru.smartup.timetracker.entity.field.enumerated.FreezeRecordStatusEnum;
-import ru.smartup.timetracker.entity.User;
+import ru.smartup.timetracker.pojo.freeze.UnfreezeDateInterval;
 import ru.smartup.timetracker.utils.FreezeDateUtils;
 
 import java.time.LocalDate;
@@ -26,15 +27,15 @@ public class FreezeService {
 
     private final LockManager lockManager;
 
-    public boolean createOrUpdateTask(final FreezeDateDtoRequest actualFreezeDate, final int userId) {
+    public boolean createOrUpdateTask(final FreezeDateDtoRequest actualFreezeDate, final int employeeId) {
         List<FreezeRecord> allRecordsAfterLastFreeze = crudFreezeService.getFreezeRecords();
-        Map<FreezeRecordStatusEnum, List<FreezeRecord>> waitingAndDeletingRecords = compareFreezeDatesWithActualAndMapByWaitingAndDeleting(allRecordsAfterLastFreeze, actualFreezeDate.getDates(), userId);
+        Map<FreezeRecordStatusEnum, List<FreezeRecord>> waitingAndDeletingRecords = compareFreezeDatesWithActualAndMapByWaitingAndDeleting(allRecordsAfterLastFreeze, actualFreezeDate.getDates(), employeeId);
         return tryLockAndUpdateScheduleFreeze(waitingAndDeletingRecords);
     }
 
     private Map<FreezeRecordStatusEnum, List<FreezeRecord>> compareFreezeDatesWithActualAndMapByWaitingAndDeleting(final List<FreezeRecord> freezeRecords,
                                                                                                                    final List<LocalDate> actualDates,
-                                                                                                                   final int userId) {
+                                                                                                                   final int employeeId) {
         final Map<LocalDate, FreezeRecord> dateToFreeze = freezeRecords
                 .stream()
                 .collect(Collectors.toMap(
@@ -47,10 +48,10 @@ public class FreezeService {
         for (final LocalDate date : actualDates) {
             FreezeRecord freezeRecord = dateToFreeze.get(date);
             if (freezeRecord == null) {
-                final User user = new User();
-                user.setId(userId);
+                final Employee employee = new Employee();
+                employee.setId(employeeId);
 
-                waitingRecords.add(new FreezeRecord(date, FreezeRecordStatusEnum.WAITING, user));
+                waitingRecords.add(new FreezeRecord(date, FreezeRecordStatusEnum.WAITING, employee));
             } else {
                 dateToFreeze.remove(date);
                 waitingRecords.add(freezeRecord);
@@ -94,13 +95,13 @@ public class FreezeService {
     public boolean unfreezeLastRecord() {
         final FreezeRecord unfreezeRecord = crudFreezeService.getCacheableLastFreeze();
 
-        final List<LocalDate> boundaryUnfreezeRecord = crudFreezeService.getBoundaryFreezeRecord(unfreezeRecord);
+        final UnfreezeDateInterval boundaryUnfreezeRecord = crudFreezeService.getBoundaryFreezeRecord(unfreezeRecord);
 
-        if (freezeValidator.hasNoUnfreezeRecord() && !freezeValidator.canUnfreeze(unfreezeRecord, boundaryUnfreezeRecord.get(1))) {
+        if (freezeValidator.hasNoUnfreezeRecord() && !freezeValidator.canUnfreeze(unfreezeRecord, boundaryUnfreezeRecord.getEndDate())) {
             return false;
         }
 
-        freezeSchedulePlanner.unfreeze(unfreezeRecord, boundaryUnfreezeRecord.get(0));
+        freezeSchedulePlanner.unfreeze(unfreezeRecord, boundaryUnfreezeRecord);
         return true;
     }
 

@@ -3,13 +3,13 @@ package ru.smartup.timetracker.core;
 import org.springframework.security.access.expression.SecurityExpressionRoot;
 import org.springframework.security.access.expression.method.MethodSecurityExpressionOperations;
 import org.springframework.security.core.Authentication;
+import ru.smartup.timetracker.entity.field.enumerated.EmployeeRoleEnum;
 import ru.smartup.timetracker.entity.field.enumerated.ProjectRelationObjectEnum;
-import ru.smartup.timetracker.entity.field.enumerated.UserRoleEnum;
-import ru.smartup.timetracker.service.RelationUserRolesService;
+import ru.smartup.timetracker.service.RelationEmployeeRolesService;
 
 public class CustomMethodSecurityExpressionRoot
         extends SecurityExpressionRoot implements MethodSecurityExpressionOperations {
-    private final RelationUserRolesService relationUserRolesService;
+    private final RelationEmployeeRolesService relationEmployeeRolesService;
 
     private Object filterObject;
 
@@ -17,9 +17,9 @@ public class CustomMethodSecurityExpressionRoot
 
     private Object target;
 
-    CustomMethodSecurityExpressionRoot(Authentication authentication, RelationUserRolesService relationUserRolesService) {
+    CustomMethodSecurityExpressionRoot(Authentication authentication, RelationEmployeeRolesService relationEmployeeRolesService) {
         super(authentication);
-        this.relationUserRolesService = relationUserRolesService;
+        this.relationEmployeeRolesService = relationEmployeeRolesService;
     }
 
     @Override
@@ -48,21 +48,21 @@ public class CustomMethodSecurityExpressionRoot
     }
 
     @Override
-    public SessionUserPrincipal getPrincipal() {
-        return (SessionUserPrincipal) super.getPrincipal();
+    public SessionEmployeePrincipal getPrincipal() {
+        return (SessionEmployeePrincipal) super.getPrincipal();
     }
 
     /**
      * Имеет ли пользователь в объекте типа projectRelationObjectEnum
-     * с идентификатором objectId какие-то права из списка userRoles
+     * с идентификатором objectId какие-то права из списка employeeRoles
      *
      * @param projectRelationObjectEnum тип объекта
      * @param objectId                  идентификатор объекта
-     * @param userRoles                 роли пользователя
+     * @param employeeRoles                 роли пользователя
      * @return
      */
     public boolean hasRoleForObject(ProjectRelationObjectEnum projectRelationObjectEnum, long objectId,
-                                    UserRoleEnum... userRoles) {
+                                    EmployeeRoleEnum... employeeRoles) {
         // TODO
         return false;
     }

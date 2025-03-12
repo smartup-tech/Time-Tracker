@@ -12,7 +12,7 @@ import java.util.List;
 @EqualsAndHashCode(callSuper = true)
 @ToString(callSuper = true)
 public class ProjectDetailDto extends ProjectShortDto {
-    private List<UserInProjectDto> users;
+    private List<EmployeeInProjectDto> employees;
 
     private List<TaskInProjectDto> tasks;
 

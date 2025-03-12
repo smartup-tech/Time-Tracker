@@ -1,6 +1,5 @@
 package ru.smartup.timetracker.controller;
 
-import org.apache.commons.lang3.StringUtils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.modelmapper.ModelMapper;
@@ -8,23 +7,22 @@ import org.springframework.core.convert.ConversionService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Sort;
-import ru.smartup.timetracker.core.SessionUserPrincipal;
+import ru.smartup.timetracker.core.SessionEmployeePrincipal;
 import ru.smartup.timetracker.core.WebConfig;
 import ru.smartup.timetracker.dto.PageableRequestParamDto;
 import ru.smartup.timetracker.dto.QueryArchiveParamRequestDto;
 import ru.smartup.timetracker.dto.project.request.ProjectCreateDto;
-import ru.smartup.timetracker.dto.project.request.UserProjectRoleDeleteDto;
-import ru.smartup.timetracker.dto.project.request.UserProjectRoleModifyDto;
+import ru.smartup.timetracker.dto.project.request.EmployeeProjectRoleDeleteDto;
+import ru.smartup.timetracker.dto.project.request.EmployeeProjectRoleModifyDto;
 import ru.smartup.timetracker.dto.project.response.ProjectDetailDto;
 import ru.smartup.timetracker.dto.project.response.ProjectShortDto;
+import ru.smartup.timetracker.entity.Employee;
+import ru.smartup.timetracker.entity.EmployeeRole;
 import ru.smartup.timetracker.entity.Project;
+import ru.smartup.timetracker.entity.field.enumerated.EmployeeRoleEnum;
 import ru.smartup.timetracker.entity.field.enumerated.ProjectRoleEnum;
 import ru.smartup.timetracker.entity.field.sort.ProjectSortFieldEnum;
-import ru.smartup.timetracker.entity.User;
-import ru.smartup.timetracker.entity.UserProjectRole;
-import ru.smartup.timetracker.entity.UserRole;
-import ru.smartup.timetracker.entity.field.enumerated.UserRoleEnum;
-import ru.smartup.timetracker.entity.field.sort.ProjectSortFieldEnum;
+import ru.smartup.timetracker.entity.EmployeeProjectRole;
 import ru.smartup.timetracker.exception.ForbiddenException;
 import ru.smartup.timetracker.exception.NotProcessedTrackUnitsException;
 import ru.smartup.timetracker.exception.NotUniqueDataException;
@@ -45,16 +43,16 @@ import static org.mockito.Mockito.*;
 public class ProjectRestControllerTest {
     private static final int PAGE = 1;
     private static final int SIZE = 10;
-    private static final int USER_ID_ONE = 1;
-    private static final int USER_ID_TWO = 2;
-    private static final String USER_EMAIL = "user_email";
+    private static final int EMPLOYEE_ID_ONE = 1;
+    private static final int EMPLOYEE_ID_TWO = 2;
+    private static final String EMPLOYEE_EMAIL = "employee_email";
     private static final int PROJECT_ID = 1;
     private static final String PROJECT_NAME = "project_name";
 
     private final ProjectService projectService = mock(ProjectService.class);
-    private final RelationUserRolesService relationUserRolesService = mock(RelationUserRolesService.class);
+    private final RelationEmployeeRolesService relationEmployeeRolesService = mock(RelationEmployeeRolesService.class);
     private final TrackUnitService trackUnitService = mock(TrackUnitService.class);
-    private final UserService userService = mock(UserService.class);
+    private final EmployeeService employeeService = mock(EmployeeService.class);
     private final TaskService taskService = mock(TaskService.class);
     private final ConversionService conversionService = mock(ConversionService.class);
     private ModelMapper modelMapper;
@@ -64,8 +62,8 @@ public class ProjectRestControllerTest {
     @BeforeEach
     public void setUp() {
         modelMapper = new WebConfig().modelMapper();
-        projectRestController = new ProjectRestController(projectService, relationUserRolesService,
-                trackUnitService, userService, taskService, modelMapper, conversionService);
+        projectRestController = new ProjectRestController(projectService, relationEmployeeRolesService,
+                trackUnitService, employeeService, taskService, modelMapper, conversionService);
     }
 
     @Test
@@ -78,14 +76,14 @@ public class ProjectRestControllerTest {
         when(projectService.getProjects(projectParam, pageableParam)).thenReturn(projects);
 
         Page<ProjectShortDto> projectsByPage = projectRestController
-                .getProjectsByPage(createSessionUserPrincipal(UserRoleEnum.ROLE_ADMIN, ProjectRoleEnum.MANAGER),
+                .getProjectsByPage(createSessionEmployeePrincipal(EmployeeRoleEnum.ROLE_ADMIN, ProjectRoleEnum.MANAGER),
                         projectParam, pageableParam);
 
         assertEquals(1, projectsByPage.getTotalElements());
     }
 
     @Test
-    public void getProjectsByPage_whenUser() {
+    public void getProjectsByPage_whenEmployee() {
         Page<ProjectShortDto> projects = new PageImpl<>(Stream.of(createProjectObj()).map(project -> modelMapper.map(project, ProjectShortDto.class)).collect(Collectors.toList()));
 
         QueryArchiveParamRequestDto projectParam = createProjectParam("", false);
@@ -94,7 +92,7 @@ public class ProjectRestControllerTest {
         when(projectService.getProjectsByIds(Set.of(PROJECT_ID), projectParam, pageableParam)).thenReturn(projects);
 
         Page<ProjectShortDto> projectsByPage = projectRestController
-                .getProjectsByPage(createSessionUserPrincipal(UserRoleEnum.ROLE_USER, ProjectRoleEnum.MANAGER),
+                .getProjectsByPage(createSessionEmployeePrincipal(EmployeeRoleEnum.ROLE_EMPLOYEE, ProjectRoleEnum.MANAGER),
                         projectParam, pageableParam);
 
         assertEquals(1, projectsByPage.getTotalElements());
@@ -110,14 +108,14 @@ public class ProjectRestControllerTest {
         when(projectService.getProjects(projectParam, pageableParam)).thenReturn(projects);
 
         Page<ProjectShortDto> projectsByPage = projectRestController
-                .getProjectsByPage(createSessionUserPrincipal(UserRoleEnum.ROLE_ADMIN, ProjectRoleEnum.MANAGER),
+                .getProjectsByPage(createSessionEmployeePrincipal(EmployeeRoleEnum.ROLE_ADMIN, ProjectRoleEnum.MANAGER),
                         projectParam, pageableParam);
 
         assertEquals(1, projectsByPage.getTotalElements());
     }
 
     @Test
-    public void getProjectsByPage_whenUserAndSearchQuery() {
+    public void getProjectsByPage_whenEmployeeAndSearchQuery() {
         Page<ProjectShortDto> projects = new PageImpl<>(Stream.of(createProjectObj()).map(project -> modelMapper.map(project, ProjectShortDto.class)).collect(Collectors.toList()));
 
         QueryArchiveParamRequestDto projectParam = createProjectParam(PROJECT_NAME, false);
@@ -126,7 +124,7 @@ public class ProjectRestControllerTest {
         when(projectService.getProjectsByIds(Set.of(PROJECT_ID), projectParam, pageableParam)).thenReturn(projects);
 
         Page<ProjectShortDto> projectsByPage = projectRestController
-                .getProjectsByPage(createSessionUserPrincipal(UserRoleEnum.ROLE_USER, ProjectRoleEnum.MANAGER),
+                .getProjectsByPage(createSessionEmployeePrincipal(EmployeeRoleEnum.ROLE_EMPLOYEE, ProjectRoleEnum.MANAGER),
                         projectParam, pageableParam);
 
         assertEquals(1, projectsByPage.getTotalElements());
@@ -138,7 +136,7 @@ public class ProjectRestControllerTest {
 
         ProjectDetailDto projectDetailDto = projectRestController.getProject(PROJECT_ID);
 
-        verify(userService).getUsersFromProject(PROJECT_ID);
+        verify(employeeService).getEmployeesFromProject(PROJECT_ID);
         verify(taskService).getTasksFromProject(PROJECT_ID);
         assertEquals(PROJECT_ID, projectDetailDto.getId());
     }
@@ -230,89 +228,89 @@ public class ProjectRestControllerTest {
     }
 
     @Test
-    public void modifyProjectUser() {
-        UserProjectRoleModifyDto userProjectRoleModifyDto = new UserProjectRoleModifyDto();
-        userProjectRoleModifyDto.setUserId(USER_ID_ONE);
+    public void modifyProjectEmployee() {
+        EmployeeProjectRoleModifyDto employeeProjectRoleModifyDto = new EmployeeProjectRoleModifyDto();
+        employeeProjectRoleModifyDto.setEmployeeId(EMPLOYEE_ID_ONE);
 
         when(projectService.getNotArchivedProject(PROJECT_ID)).thenReturn(Optional.of(createProjectObj()));
-        when(userService.getNotArchivedUser(USER_ID_ONE)).thenReturn(Optional.of(createUser()));
+        when(employeeService.getNotArchivedEmployee(EMPLOYEE_ID_ONE)).thenReturn(Optional.of(createEmployee()));
 
-        projectRestController.modifyProjectUser(userProjectRoleModifyDto, PROJECT_ID);
+        projectRestController.modifyProjectEmployee(employeeProjectRoleModifyDto, PROJECT_ID);
 
-        verify(relationUserRolesService).updateUserProjectRole(any());
+        verify(relationEmployeeRolesService).updateEmployeeProjectRole(any());
     }
 
     @Test
-    public void modifyProjectUser_shouldReturnResourceNotFoundExceptionForProject() {
+    public void modifyProjectEmployee_shouldReturnResourceNotFoundExceptionForProject() {
         when(projectService.getNotArchivedProject(PROJECT_ID)).thenReturn(Optional.empty());
 
-        assertThrows(ResourceNotFoundException.class, () -> projectRestController.modifyProjectUser(any(), PROJECT_ID));
+        assertThrows(ResourceNotFoundException.class, () -> projectRestController.modifyProjectEmployee(any(), PROJECT_ID));
     }
 
     @Test
-    public void modifyProjectUser_shouldReturnResourceNotFoundExceptionForUser() {
-        UserProjectRoleModifyDto userProjectRoleModifyDto = new UserProjectRoleModifyDto();
-        userProjectRoleModifyDto.setUserId(USER_ID_ONE);
+    public void modifyProjectEmployee_shouldReturnResourceNotFoundExceptionForEmployee() {
+        EmployeeProjectRoleModifyDto employeeProjectRoleModifyDto = new EmployeeProjectRoleModifyDto();
+        employeeProjectRoleModifyDto.setEmployeeId(EMPLOYEE_ID_ONE);
 
         when(projectService.getNotArchivedProject(PROJECT_ID)).thenReturn(Optional.of(createProjectObj()));
-        when(userService.getNotArchivedUser(USER_ID_ONE)).thenReturn(Optional.empty());
+        when(employeeService.getNotArchivedEmployee(EMPLOYEE_ID_ONE)).thenReturn(Optional.empty());
 
         assertThrows(ResourceNotFoundException.class, () -> projectRestController
-                .modifyProjectUser(userProjectRoleModifyDto, PROJECT_ID));
+                .modifyProjectEmployee(employeeProjectRoleModifyDto, PROJECT_ID));
     }
 
     @Test
-    public void deleteProjectUser() {
-        UserProjectRoleDeleteDto userProjectRoleDeleteDto = new UserProjectRoleDeleteDto();
-        userProjectRoleDeleteDto.setUserId(USER_ID_ONE);
+    public void deleteProjectEmployee() {
+        EmployeeProjectRoleDeleteDto employeeProjectRoleDeleteDto = new EmployeeProjectRoleDeleteDto();
+        employeeProjectRoleDeleteDto.setEmployeeId(EMPLOYEE_ID_ONE);
 
         when(projectService.getNotArchivedProject(PROJECT_ID)).thenReturn(Optional.of(createProjectObj()));
-        when(userService.getNotArchivedUser(USER_ID_ONE)).thenReturn(Optional.of(createUser()));
+        when(employeeService.getNotArchivedEmployee(EMPLOYEE_ID_ONE)).thenReturn(Optional.of(createEmployee()));
 
-        projectRestController.deleteProjectUser(userProjectRoleDeleteDto, PROJECT_ID);
+        projectRestController.deleteProjectEmployee(employeeProjectRoleDeleteDto, PROJECT_ID);
 
-        verify(relationUserRolesService).deleteUserProjectRole(USER_ID_ONE, PROJECT_ID);
+        verify(relationEmployeeRolesService).deleteEmployeeProjectRole(EMPLOYEE_ID_ONE, PROJECT_ID);
     }
 
     @Test
-    public void deleteProjectUser_shouldReturnResourceNotFoundExceptionForProject() {
+    public void deleteProjectEmployee_shouldReturnResourceNotFoundExceptionForProject() {
         when(projectService.getNotArchivedProject(PROJECT_ID)).thenReturn(Optional.empty());
 
-        assertThrows(ResourceNotFoundException.class, () -> projectRestController.deleteProjectUser(any(), PROJECT_ID));
+        assertThrows(ResourceNotFoundException.class, () -> projectRestController.deleteProjectEmployee(any(), PROJECT_ID));
     }
 
     @Test
-    public void deleteProjectUser_shouldReturnResourceNotFoundExceptionForUser() {
-        UserProjectRoleDeleteDto userProjectRoleDeleteDto = new UserProjectRoleDeleteDto();
-        userProjectRoleDeleteDto.setUserId(USER_ID_ONE);
+    public void deleteProjectEmployee_shouldReturnResourceNotFoundExceptionForEmployee() {
+        EmployeeProjectRoleDeleteDto employeeProjectRoleDeleteDto = new EmployeeProjectRoleDeleteDto();
+        employeeProjectRoleDeleteDto.setEmployeeId(EMPLOYEE_ID_ONE);
 
         when(projectService.getNotArchivedProject(PROJECT_ID)).thenReturn(Optional.of(createProjectObj()));
-        when(userService.getNotArchivedUser(USER_ID_ONE)).thenReturn(Optional.empty());
+        when(employeeService.getNotArchivedEmployee(EMPLOYEE_ID_ONE)).thenReturn(Optional.empty());
 
         assertThrows(ResourceNotFoundException.class, () -> projectRestController
-                .deleteProjectUser(userProjectRoleDeleteDto, PROJECT_ID));
+                .deleteProjectEmployee(employeeProjectRoleDeleteDto, PROJECT_ID));
     }
 
     @Test
-    public void getProjectsOfUser() {
-        projectRestController.getProjectsOfUser(
-                createSessionUserPrincipal(UserRoleEnum.ROLE_USER, ProjectRoleEnum.EMPLOYEE), USER_ID_ONE);
+    public void getProjectsOfEmployee() {
+        projectRestController.getProjectsOfEmployee(
+                createSessionEmployeePrincipal(EmployeeRoleEnum.ROLE_EMPLOYEE, ProjectRoleEnum.EMPLOYEE), EMPLOYEE_ID_ONE);
 
-        verify(projectService).getNotArchivedProjectsOfUserWithRole(USER_ID_ONE);
+        verify(projectService).getNotArchivedProjectsOfEmployeeWithRole(EMPLOYEE_ID_ONE);
     }
 
     @Test
-    public void getProjectsOfUser_whenAdmin() {
-        projectRestController.getProjectsOfUser(
-                createSessionUserPrincipal(UserRoleEnum.ROLE_ADMIN, ProjectRoleEnum.EMPLOYEE), USER_ID_TWO);
+    public void getProjectsOfEmployee_whenAdmin() {
+        projectRestController.getProjectsOfEmployee(
+                createSessionEmployeePrincipal(EmployeeRoleEnum.ROLE_ADMIN, ProjectRoleEnum.EMPLOYEE), EMPLOYEE_ID_TWO);
 
-        verify(projectService).getNotArchivedProjectsOfUserWithRole(USER_ID_TWO);
+        verify(projectService).getNotArchivedProjectsOfEmployeeWithRole(EMPLOYEE_ID_TWO);
     }
 
     @Test
-    public void getProjectsOfUser_shouldReturnForbiddenException() {
-        assertThrows(ForbiddenException.class, () -> projectRestController.getProjectsOfUser(
-                createSessionUserPrincipal(UserRoleEnum.ROLE_USER, ProjectRoleEnum.EMPLOYEE), USER_ID_TWO));
+    public void getProjectsOfEmployee_shouldReturnForbiddenException() {
+        assertThrows(ForbiddenException.class, () -> projectRestController.getProjectsOfEmployee(
+                createSessionEmployeePrincipal(EmployeeRoleEnum.ROLE_EMPLOYEE, ProjectRoleEnum.EMPLOYEE), EMPLOYEE_ID_TWO));
     }
 
     @Test
@@ -326,11 +324,11 @@ public class ProjectRestControllerTest {
         assertEquals(PROJECT_NAME, activeProjects.get(0).getName());
     }
 
-    private User createUser() {
-        User user = new User();
-        user.setId(USER_ID_ONE);
-        user.setEmail(USER_EMAIL);
-        return user;
+    private Employee createEmployee() {
+        Employee employee = new Employee();
+        employee.setId(EMPLOYEE_ID_ONE);
+        employee.setEmail(EMPLOYEE_EMAIL);
+        return employee;
     }
 
     private Project createProjectObj() {
@@ -340,17 +338,17 @@ public class ProjectRestControllerTest {
         return project;
     }
 
-    private SessionUserPrincipal createSessionUserPrincipal(UserRoleEnum role, ProjectRoleEnum projectRole) {
-        SessionUserPrincipal sessionUserPrincipal = new SessionUserPrincipal(USER_ID_ONE, USER_EMAIL);
-        UserRole userRole = new UserRole();
-        userRole.setUserId(USER_ID_ONE);
-        userRole.setRoleId(role);
-        UserProjectRole userProjectRole = new UserProjectRole();
-        userProjectRole.setProjectId(PROJECT_ID);
-        userProjectRole.setUserId(USER_ID_ONE);
-        userProjectRole.setProjectRoleId(projectRole);
-        sessionUserPrincipal.setAllRoles(List.of(userRole), List.of(userProjectRole));
-        return sessionUserPrincipal;
+    private SessionEmployeePrincipal createSessionEmployeePrincipal(EmployeeRoleEnum role, ProjectRoleEnum projectRole) {
+        SessionEmployeePrincipal sessionEmployeePrincipal = new SessionEmployeePrincipal(EMPLOYEE_ID_ONE, EMPLOYEE_EMAIL);
+        EmployeeRole employeeRole = new EmployeeRole();
+        employeeRole.setEmployeeId(EMPLOYEE_ID_ONE);
+        employeeRole.setRoleId(role);
+        EmployeeProjectRole employeeProjectRole = new EmployeeProjectRole();
+        employeeProjectRole.setProjectId(PROJECT_ID);
+        employeeProjectRole.setEmployeeId(EMPLOYEE_ID_ONE);
+        employeeProjectRole.setProjectRoleId(projectRole);
+        sessionEmployeePrincipal.setAllRoles(List.of(employeeRole), List.of(employeeProjectRole));
+        return sessionEmployeePrincipal;
     }
 
     private QueryArchiveParamRequestDto createProjectParam(String query, boolean archive) {

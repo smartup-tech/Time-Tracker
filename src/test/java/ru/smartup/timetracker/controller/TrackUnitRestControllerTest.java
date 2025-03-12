@@ -4,25 +4,20 @@ import org.apache.commons.lang3.StringUtils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.data.domain.Sort;
-import ru.smartup.timetracker.core.SessionUserPrincipal;
+import ru.smartup.timetracker.core.SessionEmployeePrincipal;
 import ru.smartup.timetracker.core.WebConfig;
+import ru.smartup.timetracker.dto.employee.response.EmployeeShortDto;
 import ru.smartup.timetracker.dto.project.response.ProjectShortDto;
 import ru.smartup.timetracker.dto.tracker.request.TrackUnitCellUpdateDto;
 import ru.smartup.timetracker.dto.tracker.request.TrackUnitRowUpdateDto;
 import ru.smartup.timetracker.dto.tracker.request.TrackUnitSubmitDto;
 import ru.smartup.timetracker.dto.tracker.response.TrackUnitRowDto;
 import ru.smartup.timetracker.dto.tracker.response.TrackUnitTableDto;
-import ru.smartup.timetracker.dto.user.response.UserShortDto;
-import ru.smartup.timetracker.entity.Task;
-import ru.smartup.timetracker.entity.TrackUnit;
-import ru.smartup.timetracker.entity.field.enumerated.TrackUnitStatusEnum;
-import ru.smartup.timetracker.entity.field.sort.UserSortFieldEnum;
-import ru.smartup.timetracker.entity.Project;
+import ru.smartup.timetracker.entity.*;
+import ru.smartup.timetracker.entity.field.enumerated.EmployeeRoleEnum;
 import ru.smartup.timetracker.entity.field.enumerated.ProjectRoleEnum;
-import ru.smartup.timetracker.entity.User;
-import ru.smartup.timetracker.entity.UserProjectRole;
-import ru.smartup.timetracker.entity.UserRole;
-import ru.smartup.timetracker.entity.field.enumerated.UserRoleEnum;
+import ru.smartup.timetracker.entity.field.enumerated.TrackUnitStatusEnum;
+import ru.smartup.timetracker.entity.field.sort.EmployeeSortFieldEnum;
 import ru.smartup.timetracker.exception.ForbiddenException;
 import ru.smartup.timetracker.exception.ResourceNotFoundException;
 import ru.smartup.timetracker.service.*;
@@ -40,9 +35,9 @@ import static org.mockito.Mockito.*;
 
 public class TrackUnitRestControllerTest {
     private static final long TASK_ID = 10;
-    private static final int USER_ID = 1;
-    private static final int USER_ID_QUERY = 2;
-    private static final String USER_EMAIL = "user_email";
+    private static final int EMPLOYEE_ID = 1;
+    private static final int EMPLOYEE_ID_QUERY = 2;
+    private static final String EMPLOYEE_EMAIL = "employee_email";
     private static final int PROJECT_ID_ONE = 1;
     private static final int PROJECT_ID_TWO = 2;
     private static final String PROJECT_NAME = "project_name";
@@ -53,7 +48,7 @@ public class TrackUnitRestControllerTest {
     private final TrackUnitService trackUnitService = mock(TrackUnitService.class);
     private final TaskService taskService = mock(TaskService.class);
     private final ProjectService projectService = mock(ProjectService.class);
-    private final UserService userService = mock(UserService.class);
+    private final EmployeeService employeeService = mock(EmployeeService.class);
     private final ProductionCalendarService productionCalendarService = mock(ProductionCalendarService.class);
     private final ObservationTaskService observationTaskService = mock(ObservationTaskService.class);
     private final CRUDFreezeService CRUDFreezeService = mock(CRUDFreezeService.class);
@@ -63,17 +58,17 @@ public class TrackUnitRestControllerTest {
     @BeforeEach
     public void setUp() {
         trackUnitRestController = new TrackUnitRestController(trackUnitService, taskService, projectService,
-                userService, CRUDFreezeService, observationTaskService, productionCalendarService, new WebConfig().modelMapper());
+                employeeService, CRUDFreezeService, observationTaskService, productionCalendarService, new WebConfig().modelMapper());
     }
 
     @Test
     public void getProjects() {
         when(projectService.getProjectsByIds(Set.of(PROJECT_ID_ONE))).thenReturn(List.of(createProject()));
-        when(userService.getUserProjectRoles(USER_ID_QUERY))
-                .thenReturn(List.of(createUserProjectRole(USER_ID_QUERY, PROJECT_ID_ONE, ProjectRoleEnum.EMPLOYEE)));
+        when(employeeService.getEmployeeProjectRoles(EMPLOYEE_ID_QUERY))
+                .thenReturn(List.of(createEmployeeProjectRole(EMPLOYEE_ID_QUERY, PROJECT_ID_ONE, ProjectRoleEnum.EMPLOYEE)));
 
-        List<ProjectShortDto> projects = trackUnitRestController.getProjects(createSessionUserPrincipal(UserRoleEnum.ROLE_USER,
-                ProjectRoleEnum.MANAGER), USER_ID_QUERY);
+        List<ProjectShortDto> projects = trackUnitRestController.getProjects(createSessionEmployeePrincipal(EmployeeRoleEnum.ROLE_EMPLOYEE,
+                ProjectRoleEnum.MANAGER), EMPLOYEE_ID_QUERY);
 
         verify(projectService, never()).getAllProjects();
         verify(projectService).getProjectsByIds(Set.of(PROJECT_ID_ONE));
@@ -85,19 +80,19 @@ public class TrackUnitRestControllerTest {
     @Test
     public void getProjects_shouldReturnForbiddenException() {
         when(projectService.getProjectsByIds(Set.of(PROJECT_ID_ONE))).thenReturn(List.of(createProject()));
-        when(userService.getUserProjectRoles(USER_ID_QUERY))
-                .thenReturn(List.of(createUserProjectRole(USER_ID_QUERY, PROJECT_ID_TWO, ProjectRoleEnum.EMPLOYEE)));
+        when(employeeService.getEmployeeProjectRoles(EMPLOYEE_ID_QUERY))
+                .thenReturn(List.of(createEmployeeProjectRole(EMPLOYEE_ID_QUERY, PROJECT_ID_TWO, ProjectRoleEnum.EMPLOYEE)));
 
-        assertThrows(ForbiddenException.class, () -> trackUnitRestController.getProjects(createSessionUserPrincipal(
-                UserRoleEnum.ROLE_USER, ProjectRoleEnum.MANAGER), USER_ID_QUERY));
+        assertThrows(ForbiddenException.class, () -> trackUnitRestController.getProjects(createSessionEmployeePrincipal(
+                EmployeeRoleEnum.ROLE_EMPLOYEE, ProjectRoleEnum.MANAGER), EMPLOYEE_ID_QUERY));
     }
 
     @Test
-    public void getProjects_whenUserIdNot() {
+    public void getProjects_whenEmployeeIdNot() {
         when(projectService.getProjectsByIds(Set.of(PROJECT_ID_ONE))).thenReturn(List.of(createProject()));
 
-        List<ProjectShortDto> projects = trackUnitRestController.getProjects(createSessionUserPrincipal(
-                UserRoleEnum.ROLE_USER, ProjectRoleEnum.EMPLOYEE), USER_ID);
+        List<ProjectShortDto> projects = trackUnitRestController.getProjects(createSessionEmployeePrincipal(
+                EmployeeRoleEnum.ROLE_EMPLOYEE, ProjectRoleEnum.EMPLOYEE), EMPLOYEE_ID);
 
         verify(projectService, never()).getAllProjects();
         verify(projectService).getProjectsByIds(Set.of(PROJECT_ID_ONE));
@@ -107,11 +102,11 @@ public class TrackUnitRestControllerTest {
     }
 
     @Test
-    public void getProjects_whenUserIdNotForAdmin() {
+    public void getProjects_whenEmployeeIdNotForAdmin() {
         when(projectService.getAllProjects()).thenReturn(List.of(createProject()));
 
-        List<ProjectShortDto> projects = trackUnitRestController.getProjects(createSessionUserPrincipal(
-                UserRoleEnum.ROLE_ADMIN, ProjectRoleEnum.EMPLOYEE), USER_ID);
+        List<ProjectShortDto> projects = trackUnitRestController.getProjects(createSessionEmployeePrincipal(
+                EmployeeRoleEnum.ROLE_ADMIN, ProjectRoleEnum.EMPLOYEE), EMPLOYEE_ID);
 
         verify(projectService).getAllProjects();
         verify(projectService, never()).getProjectsByIds(anySet());
@@ -121,69 +116,69 @@ public class TrackUnitRestControllerTest {
     }
 
     @Test
-    public void searchUsers() {
-        User user = createUser();
+    public void searchEmployees() {
+        Employee employee = createEmployee();
 
-        when(userService.searchUsersFromProjects(Set.of(PROJECT_ID_ONE), StringUtils.EMPTY, false,
-                Sort.by(Sort.Direction.ASC, UserSortFieldEnum.NAME.getValues())))
-                .thenReturn(List.of(user, new User()));
+        when(employeeService.searchEmployeesFromProjects(Set.of(PROJECT_ID_ONE), StringUtils.EMPTY, false,
+                Sort.by(Sort.Direction.ASC, EmployeeSortFieldEnum.NAME.getValues())))
+                .thenReturn(List.of(employee, new Employee()));
 
-        Collection<UserShortDto> users = trackUnitRestController.searchUsers(createSessionUserPrincipal(
-                UserRoleEnum.ROLE_USER, ProjectRoleEnum.MANAGER), StringUtils.EMPTY, false);
+        Collection<EmployeeShortDto> employees = trackUnitRestController.searchEmployees(createSessionEmployeePrincipal(
+                EmployeeRoleEnum.ROLE_EMPLOYEE, ProjectRoleEnum.MANAGER), StringUtils.EMPTY, false);
 
-        verify(userService, never()).getUser(USER_ID);
-        assertEquals(2, users.size());
-        UserShortDto userShortDto = users.iterator().next();
-        assertEquals(USER_ID, userShortDto.getId());
-        assertEquals(USER_EMAIL, userShortDto.getEmail());
+        verify(employeeService, never()).getEmployee(EMPLOYEE_ID);
+        assertEquals(2, employees.size());
+        EmployeeShortDto employeeShortDto = employees.iterator().next();
+        assertEquals(EMPLOYEE_ID, employeeShortDto.getId());
+        assertEquals(EMPLOYEE_EMAIL, employeeShortDto.getEmail());
     }
 
     @Test
-    public void searchUsers_whenAdmin() {
-        when(userService.searchUsers(StringUtils.EMPTY, false, Sort.by(Sort.Direction.ASC, UserSortFieldEnum.NAME.getValues())))
-                .thenReturn(List.of(createUser(), new User()));
+    public void searchEmployees_whenAdmin() {
+        when(employeeService.searchEmployees(StringUtils.EMPTY, false, Sort.by(Sort.Direction.ASC, EmployeeSortFieldEnum.NAME.getValues())))
+                .thenReturn(List.of(createEmployee(), new Employee()));
 
-        Collection<UserShortDto> users = trackUnitRestController.searchUsers(createSessionUserPrincipal(
-                UserRoleEnum.ROLE_ADMIN, ProjectRoleEnum.EMPLOYEE), StringUtils.EMPTY, false);
+        Collection<EmployeeShortDto> employees = trackUnitRestController.searchEmployees(createSessionEmployeePrincipal(
+                EmployeeRoleEnum.ROLE_ADMIN, ProjectRoleEnum.EMPLOYEE), StringUtils.EMPTY, false);
 
-        assertEquals(2, users.size());
-        UserShortDto user = users.iterator().next();
-        assertEquals(USER_ID, user.getId());
-        assertEquals(USER_EMAIL, user.getEmail());
+        assertEquals(2, employees.size());
+        EmployeeShortDto employee = employees.iterator().next();
+        assertEquals(EMPLOYEE_ID, employee.getId());
+        assertEquals(EMPLOYEE_EMAIL, employee.getEmail());
     }
 
     @Test
-    public void searchUsers_shouldReturnResourceNotFoundException() {
-        when(userService.getUser(USER_ID)).thenReturn(Optional.empty());
+    public void searchEmployees_shouldReturnResourceNotFoundException() {
+        when(employeeService.getEmployee(EMPLOYEE_ID)).thenReturn(Optional.empty());
 
-        assertThrows(ResourceNotFoundException.class, () -> trackUnitRestController.searchUsers(createSessionUserPrincipal(
-                UserRoleEnum.ROLE_USER, ProjectRoleEnum.EMPLOYEE), StringUtils.EMPTY, false));
+        assertThrows(ResourceNotFoundException.class, () -> trackUnitRestController.searchEmployees(createSessionEmployeePrincipal(
+                EmployeeRoleEnum.ROLE_EMPLOYEE, ProjectRoleEnum.EMPLOYEE), StringUtils.EMPTY, false));
     }
 
     @Test
-    public void searchUsers_whenUserAndEmployee() {
-        User user = createUser();
+    public void searchEmployees_whenEmployeeAndEmployee() {
+        Employee employee = createEmployee();
 
-        when(userService.getUser(USER_ID)).thenReturn(Optional.of(user));
+        when(employeeService.getEmployee(EMPLOYEE_ID)).thenReturn(Optional.of(employee));
 
-        Collection<UserShortDto> users = trackUnitRestController.searchUsers(createSessionUserPrincipal(
-                UserRoleEnum.ROLE_USER, ProjectRoleEnum.EMPLOYEE), StringUtils.EMPTY, false);
+        Collection<EmployeeShortDto> employees = trackUnitRestController.searchEmployees(createSessionEmployeePrincipal(
+                EmployeeRoleEnum.ROLE_EMPLOYEE, ProjectRoleEnum.EMPLOYEE), StringUtils.EMPTY, false);
 
-        assertEquals(1, users.size());
-        UserShortDto userShortDto = users.iterator().next();
-        assertEquals(USER_ID, userShortDto.getId());
-        assertEquals(USER_EMAIL, userShortDto.getEmail());
+        assertEquals(1, employees.size());
+        EmployeeShortDto employeeShortDto = employees.iterator().next();
+        assertEquals(EMPLOYEE_ID, employeeShortDto.getId());
+        assertEquals(EMPLOYEE_EMAIL, employeeShortDto.getEmail());
     }
 
     @Test
     public void getDataForWeek() {
-        when(userService.getUserProjectRoles(USER_ID_QUERY))
-                .thenReturn(List.of(createUserProjectRole(USER_ID_QUERY, PROJECT_ID_ONE, ProjectRoleEnum.EMPLOYEE)));
-        when(trackUnitService.getByUserIdAndProjectIdsAndRange(USER_ID_QUERY, Set.of(PROJECT_ID_ONE), FIRST_DAY_OF_WEEK, LAST_DAY_OF_WEEK))
+        when(employeeService.getEmployeeProjectRoles(EMPLOYEE_ID_QUERY))
+                .thenReturn(List.of(createEmployeeProjectRole(EMPLOYEE_ID_QUERY, PROJECT_ID_ONE, ProjectRoleEnum.EMPLOYEE)));
+        when(trackUnitService.getByEmployeeIdAndProjectIdsAndRange(EMPLOYEE_ID_QUERY, Set.of(PROJECT_ID_ONE), FIRST_DAY_OF_WEEK, LAST_DAY_OF_WEEK))
                 .thenReturn(List.of(createTrackUnit()));
 
-        TrackUnitTableDto trackUnitTableDto = trackUnitRestController.getDataForWeek(createSessionUserPrincipal(
-                UserRoleEnum.ROLE_USER, ProjectRoleEnum.MANAGER), USER_ID_QUERY, CURRENT_DATE);
+        TrackUnitTableDto trackUnitTableDto = trackUnitRestController.getDataForWeek(createSessionEmployeePrincipal(
+                EmployeeRoleEnum.ROLE_EMPLOYEE, ProjectRoleEnum.MANAGER), EMPLOYEE_ID_QUERY, CURRENT_DATE);
 
         assertEquals(1, trackUnitTableDto.getData().size());
         assertEquals(7, trackUnitTableDto.getData().get(0).getUnits().size());
@@ -193,27 +188,27 @@ public class TrackUnitRestControllerTest {
 
     @Test
     public void getDataForWeek_shouldReturnEmptyList() {
-        TrackUnitTableDto trackUnitTableDto = trackUnitRestController.getDataForWeek(createSessionUserPrincipal(
-                UserRoleEnum.ROLE_USER, ProjectRoleEnum.EMPLOYEE), USER_ID_QUERY, CURRENT_DATE);
+        TrackUnitTableDto trackUnitTableDto = trackUnitRestController.getDataForWeek(createSessionEmployeePrincipal(
+                EmployeeRoleEnum.ROLE_EMPLOYEE, ProjectRoleEnum.EMPLOYEE), EMPLOYEE_ID_QUERY, CURRENT_DATE);
 
         assertEquals(0, trackUnitTableDto.getData().size());
     }
 
     @Test
     public void getDataForWeek_whenAdmin() {
-        trackUnitRestController.getDataForWeek(createSessionUserPrincipal(
-                UserRoleEnum.ROLE_ADMIN, ProjectRoleEnum.EMPLOYEE), USER_ID_QUERY, CURRENT_DATE);
+        trackUnitRestController.getDataForWeek(createSessionEmployeePrincipal(
+                EmployeeRoleEnum.ROLE_ADMIN, ProjectRoleEnum.EMPLOYEE), EMPLOYEE_ID_QUERY, CURRENT_DATE);
 
-        verify(trackUnitService).getByUserIdAndRange(USER_ID_QUERY, FIRST_DAY_OF_WEEK, LAST_DAY_OF_WEEK);
+        verify(trackUnitService).getByEmployeeIdAndRange(EMPLOYEE_ID_QUERY, FIRST_DAY_OF_WEEK, LAST_DAY_OF_WEEK);
         verify(CRUDFreezeService).getCacheableLastFreeze();
     }
 
     @Test
-    public void getDataForWeek_whenCurrentUser() {
-        trackUnitRestController.getDataForWeek(createSessionUserPrincipal(
-                UserRoleEnum.ROLE_USER, ProjectRoleEnum.EMPLOYEE), USER_ID, CURRENT_DATE);
+    public void getDataForWeek_whenCurrentEmployee() {
+        trackUnitRestController.getDataForWeek(createSessionEmployeePrincipal(
+                EmployeeRoleEnum.ROLE_EMPLOYEE, ProjectRoleEnum.EMPLOYEE), EMPLOYEE_ID, CURRENT_DATE);
 
-        verify(trackUnitService).getByUserIdAndRange(anyInt(), any(), any());
+        verify(trackUnitService).getByEmployeeIdAndRange(anyInt(), any(), any());
         verify(CRUDFreezeService).getCacheableLastFreeze();
     }
 
@@ -224,8 +219,8 @@ public class TrackUnitRestControllerTest {
         when(taskService.getNotArchivedTask(trackUnitRowUpdateDto.getTaskId())).thenReturn(Optional.of(createTask()));
         when(projectService.getProject(PROJECT_ID_ONE)).thenReturn(Optional.of(createProject()));
 
-        TrackUnitRowDto trackUnitRowDto = trackUnitRestController.updateDataForWeek(createSessionUserPrincipal(
-                UserRoleEnum.ROLE_USER, ProjectRoleEnum.EMPLOYEE), trackUnitRowUpdateDto);
+        TrackUnitRowDto trackUnitRowDto = trackUnitRestController.updateDataForWeek(createSessionEmployeePrincipal(
+                EmployeeRoleEnum.ROLE_EMPLOYEE, ProjectRoleEnum.EMPLOYEE), trackUnitRowUpdateDto);
 
         verify(trackUnitService, never()).deleteTrackUnits(anyList());
         verify(trackUnitService).insertOrUpdateHoursAndComment(anyList(), any());
@@ -241,8 +236,8 @@ public class TrackUnitRestControllerTest {
         when(taskService.getNotArchivedTask(trackUnitRowUpdateDto.getTaskId())).thenReturn(Optional.of(createTask()));
         when(projectService.getProject(PROJECT_ID_ONE)).thenReturn(Optional.of(createProject()));
 
-        trackUnitRestController.deleteDataForWeek(createSessionUserPrincipal(
-                UserRoleEnum.ROLE_USER, ProjectRoleEnum.EMPLOYEE), trackUnitRowUpdateDto);
+        trackUnitRestController.deleteDataForWeek(createSessionEmployeePrincipal(
+                EmployeeRoleEnum.ROLE_EMPLOYEE, ProjectRoleEnum.EMPLOYEE), trackUnitRowUpdateDto);
 
         verify(trackUnitService).deleteTrackUnits(any());
         verify(trackUnitService, never()).insertOrUpdateHoursAndComment(anyList(), any());
@@ -278,99 +273,99 @@ public class TrackUnitRestControllerTest {
 
         assertThrows(ForbiddenException.class,
                 () -> trackUnitRestController.updateDataForWeek(
-                        createSessionUserPrincipal(UserRoleEnum.ROLE_USER, ProjectRoleEnum.EMPLOYEE, PROJECT_ID_TWO),
+                        createSessionEmployeePrincipal(EmployeeRoleEnum.ROLE_EMPLOYEE, ProjectRoleEnum.EMPLOYEE, PROJECT_ID_TWO),
                         trackUnitRowUpdateDto));
     }
 
     @Test
     public void getUnsubmittedHours() {
-        when(userService.getUserProjectRoles(USER_ID_QUERY))
-                .thenReturn(List.of(createUserProjectRole(USER_ID_QUERY, PROJECT_ID_ONE, ProjectRoleEnum.EMPLOYEE)));
+        when(employeeService.getEmployeeProjectRoles(EMPLOYEE_ID_QUERY))
+                .thenReturn(List.of(createEmployeeProjectRole(EMPLOYEE_ID_QUERY, PROJECT_ID_ONE, ProjectRoleEnum.EMPLOYEE)));
 
-        trackUnitRestController.getUnsubmittedHours(createSessionUserPrincipal(
-                UserRoleEnum.ROLE_USER, ProjectRoleEnum.MANAGER), USER_ID_QUERY);
+        trackUnitRestController.getUnsubmittedHours(createSessionEmployeePrincipal(
+                EmployeeRoleEnum.ROLE_EMPLOYEE, ProjectRoleEnum.MANAGER), EMPLOYEE_ID_QUERY);
 
-        verify(trackUnitService).getUnsubmittedHours(USER_ID_QUERY, Set.of(PROJECT_ID_ONE));
+        verify(trackUnitService).getUnsubmittedHours(EMPLOYEE_ID_QUERY, Set.of(PROJECT_ID_ONE));
     }
 
     @Test
     public void getUnsubmittedHours_shouldReturnForbiddenException() {
         assertThrows(ForbiddenException.class, () ->
-                trackUnitRestController.getUnsubmittedHours(createSessionUserPrincipal(UserRoleEnum.ROLE_USER,
-                        ProjectRoleEnum.EMPLOYEE), USER_ID_QUERY));
+                trackUnitRestController.getUnsubmittedHours(createSessionEmployeePrincipal(EmployeeRoleEnum.ROLE_EMPLOYEE,
+                        ProjectRoleEnum.EMPLOYEE), EMPLOYEE_ID_QUERY));
     }
 
     @Test
     public void getUnsubmittedHours_whenAdmin() {
-        trackUnitRestController.getUnsubmittedHours(createSessionUserPrincipal(
-                UserRoleEnum.ROLE_ADMIN, ProjectRoleEnum.EMPLOYEE), USER_ID_QUERY);
+        trackUnitRestController.getUnsubmittedHours(createSessionEmployeePrincipal(
+                EmployeeRoleEnum.ROLE_ADMIN, ProjectRoleEnum.EMPLOYEE), EMPLOYEE_ID_QUERY);
 
-        verify(trackUnitService).getUnsubmittedHours(USER_ID_QUERY);
+        verify(trackUnitService).getUnsubmittedHours(EMPLOYEE_ID_QUERY);
     }
 
     @Test
-    public void getUnsubmittedHours_whenCurrentUser() {
-        trackUnitRestController.getUnsubmittedHours(createSessionUserPrincipal(
-                UserRoleEnum.ROLE_USER, ProjectRoleEnum.EMPLOYEE), USER_ID);
+    public void getUnsubmittedHours_whenCurrentEmployee() {
+        trackUnitRestController.getUnsubmittedHours(createSessionEmployeePrincipal(
+                EmployeeRoleEnum.ROLE_EMPLOYEE, ProjectRoleEnum.EMPLOYEE), EMPLOYEE_ID);
 
-        verify(trackUnitService).getUnsubmittedHours(USER_ID);
+        verify(trackUnitService).getUnsubmittedHours(EMPLOYEE_ID);
     }
 
     @Test
     public void submitHours() {
-        TrackUnitSubmitDto submitDto = createTrackUnitSubmitDto(USER_ID_QUERY);
+        TrackUnitSubmitDto submitDto = createTrackUnitSubmitDto(EMPLOYEE_ID_QUERY);
 
-        when(userService.getUserProjectRoles(USER_ID_QUERY))
-                .thenReturn(List.of(createUserProjectRole(USER_ID_QUERY, PROJECT_ID_ONE, ProjectRoleEnum.EMPLOYEE)));
+        when(employeeService.getEmployeeProjectRoles(EMPLOYEE_ID_QUERY))
+                .thenReturn(List.of(createEmployeeProjectRole(EMPLOYEE_ID_QUERY, PROJECT_ID_ONE, ProjectRoleEnum.EMPLOYEE)));
 
-        trackUnitRestController.submitHours(createSessionUserPrincipal(
-                UserRoleEnum.ROLE_USER, ProjectRoleEnum.MANAGER), submitDto);
+        trackUnitRestController.submitHours(createSessionEmployeePrincipal(
+                EmployeeRoleEnum.ROLE_EMPLOYEE, ProjectRoleEnum.MANAGER), submitDto);
 
-        verify(trackUnitService).submit(USER_ID_QUERY, Set.of(PROJECT_ID_ONE), new ArrayList<>(submitDto.getWeeks()));
+        verify(trackUnitService).submit(EMPLOYEE_ID_QUERY, Set.of(PROJECT_ID_ONE), new ArrayList<>(submitDto.getWeeks()));
     }
 
     @Test
     public void submitHours_shouldReturnForbiddenException() {
         assertThrows(ForbiddenException.class, () ->
-                trackUnitRestController.submitHours(createSessionUserPrincipal(
-                        UserRoleEnum.ROLE_USER, ProjectRoleEnum.EMPLOYEE), createTrackUnitSubmitDto(USER_ID_QUERY)));
+                trackUnitRestController.submitHours(createSessionEmployeePrincipal(
+                        EmployeeRoleEnum.ROLE_EMPLOYEE, ProjectRoleEnum.EMPLOYEE), createTrackUnitSubmitDto(EMPLOYEE_ID_QUERY)));
     }
 
     @Test
     public void submitHours_whenAdmin() {
-        TrackUnitSubmitDto submitDto = createTrackUnitSubmitDto(USER_ID_QUERY);
+        TrackUnitSubmitDto submitDto = createTrackUnitSubmitDto(EMPLOYEE_ID_QUERY);
 
-        trackUnitRestController.submitHours(createSessionUserPrincipal(
-                UserRoleEnum.ROLE_ADMIN, ProjectRoleEnum.EMPLOYEE), submitDto);
+        trackUnitRestController.submitHours(createSessionEmployeePrincipal(
+                EmployeeRoleEnum.ROLE_ADMIN, ProjectRoleEnum.EMPLOYEE), submitDto);
 
-        verify(trackUnitService).submit(USER_ID_QUERY, new ArrayList<>(submitDto.getWeeks()));
+        verify(trackUnitService).submit(EMPLOYEE_ID_QUERY, new ArrayList<>(submitDto.getWeeks()));
     }
 
     @Test
-    public void submitHours_whenCurrentUser() {
-        TrackUnitSubmitDto submitDto = createTrackUnitSubmitDto(USER_ID);
+    public void submitHours_whenCurrentEmployee() {
+        TrackUnitSubmitDto submitDto = createTrackUnitSubmitDto(EMPLOYEE_ID);
 
-        trackUnitRestController.submitHours(createSessionUserPrincipal(
-                UserRoleEnum.ROLE_USER, ProjectRoleEnum.EMPLOYEE), submitDto);
+        trackUnitRestController.submitHours(createSessionEmployeePrincipal(
+                EmployeeRoleEnum.ROLE_EMPLOYEE, ProjectRoleEnum.EMPLOYEE), submitDto);
 
-        verify(trackUnitService).submit(USER_ID, new ArrayList<>(submitDto.getWeeks()));
+        verify(trackUnitService).submit(EMPLOYEE_ID, new ArrayList<>(submitDto.getWeeks()));
     }
 
-    private SessionUserPrincipal createSessionUserPrincipal(UserRoleEnum role, ProjectRoleEnum projectRole) {
-        return createSessionUserPrincipal(role, projectRole, PROJECT_ID_ONE);
+    private SessionEmployeePrincipal createSessionEmployeePrincipal(EmployeeRoleEnum role, ProjectRoleEnum projectRole) {
+        return createSessionEmployeePrincipal(role, projectRole, PROJECT_ID_ONE);
     }
 
-    private SessionUserPrincipal createSessionUserPrincipal(UserRoleEnum role, ProjectRoleEnum projectRole, int projectId) {
-        SessionUserPrincipal sessionUserPrincipal = new SessionUserPrincipal(USER_ID, USER_EMAIL);
-        UserRole userRole = new UserRole();
-        userRole.setUserId(USER_ID);
-        userRole.setRoleId(role);
-        UserProjectRole userProjectRole = new UserProjectRole();
-        userProjectRole.setProjectId(projectId);
-        userProjectRole.setUserId(USER_ID);
-        userProjectRole.setProjectRoleId(projectRole);
-        sessionUserPrincipal.setAllRoles(List.of(userRole), List.of(userProjectRole));
-        return sessionUserPrincipal;
+    private SessionEmployeePrincipal createSessionEmployeePrincipal(EmployeeRoleEnum role, ProjectRoleEnum projectRole, int projectId) {
+        SessionEmployeePrincipal sessionEmployeePrincipal = new SessionEmployeePrincipal(EMPLOYEE_ID, EMPLOYEE_EMAIL);
+        EmployeeRole employeeRole = new EmployeeRole();
+        employeeRole.setEmployeeId(EMPLOYEE_ID);
+        employeeRole.setRoleId(role);
+        EmployeeProjectRole employeeProjectRole = new EmployeeProjectRole();
+        employeeProjectRole.setProjectId(projectId);
+        employeeProjectRole.setEmployeeId(EMPLOYEE_ID);
+        employeeProjectRole.setProjectRoleId(projectRole);
+        sessionEmployeePrincipal.setAllRoles(List.of(employeeRole), List.of(employeeProjectRole));
+        return sessionEmployeePrincipal;
     }
 
     private Project createProject() {
@@ -380,24 +375,24 @@ public class TrackUnitRestControllerTest {
         return project;
     }
 
-    private UserProjectRole createUserProjectRole(int userId, int projectId, ProjectRoleEnum projectRoleEnum) {
-        UserProjectRole userProjectRole = new UserProjectRole();
-        userProjectRole.setUserId(userId);
-        userProjectRole.setProjectId(projectId);
-        userProjectRole.setProjectRoleId(projectRoleEnum);
-        return userProjectRole;
+    private EmployeeProjectRole createEmployeeProjectRole(int employeeId, int projectId, ProjectRoleEnum projectRoleEnum) {
+        EmployeeProjectRole employeeProjectRole = new EmployeeProjectRole();
+        employeeProjectRole.setEmployeeId(employeeId);
+        employeeProjectRole.setProjectId(projectId);
+        employeeProjectRole.setProjectRoleId(projectRoleEnum);
+        return employeeProjectRole;
     }
 
-    private User createUser() {
-        User user = new User();
-        user.setId(USER_ID);
-        user.setEmail(USER_EMAIL);
-        return user;
+    private Employee createEmployee() {
+        Employee employee = new Employee();
+        employee.setId(EMPLOYEE_ID);
+        employee.setEmail(EMPLOYEE_EMAIL);
+        return employee;
     }
 
     private TrackUnit createTrackUnit() {
         TrackUnit trackUnit = new TrackUnit();
-        trackUnit.setUserId(USER_ID);
+        trackUnit.setEmployeeId(EMPLOYEE_ID);
         trackUnit.setTask(createTask());
         trackUnit.setProject(createProject());
         trackUnit.setStatus(TrackUnitStatusEnum.CREATED);
@@ -421,10 +416,10 @@ public class TrackUnitRestControllerTest {
         return trackUnitRowUpdateDto;
     }
 
-    private TrackUnitSubmitDto createTrackUnitSubmitDto(int userId) {
+    private TrackUnitSubmitDto createTrackUnitSubmitDto(int employeeId) {
         TrackUnitSubmitDto trackUnitSubmitDto = new TrackUnitSubmitDto();
         trackUnitSubmitDto.setWeeks(Set.of(Date.valueOf(CURRENT_DATE)));
-        trackUnitSubmitDto.setUserId(userId);
+        trackUnitSubmitDto.setEmployeeId(employeeId);
         return trackUnitSubmitDto;
     }
 }

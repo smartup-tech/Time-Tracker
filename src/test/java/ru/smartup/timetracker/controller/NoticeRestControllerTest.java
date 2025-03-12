@@ -3,14 +3,14 @@ package ru.smartup.timetracker.controller;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
-import ru.smartup.timetracker.core.SessionUserPrincipal;
+import ru.smartup.timetracker.core.SessionEmployeePrincipal;
 import ru.smartup.timetracker.core.WebConfig;
 import ru.smartup.timetracker.dto.notice.request.NoticeDeleteDto;
 import ru.smartup.timetracker.dto.notice.request.NoticeReadDto;
 import ru.smartup.timetracker.dto.notice.response.NoticeDto;
+import ru.smartup.timetracker.entity.EmployeeRole;
 import ru.smartup.timetracker.entity.Notice;
-import ru.smartup.timetracker.entity.UserRole;
-import ru.smartup.timetracker.entity.field.enumerated.UserRoleEnum;
+import ru.smartup.timetracker.entity.field.enumerated.EmployeeRoleEnum;
 import ru.smartup.timetracker.exception.ResourceNotFoundException;
 import ru.smartup.timetracker.service.notification.NoticeScheduleService;
 import ru.smartup.timetracker.service.notification.NoticeService;
@@ -24,8 +24,8 @@ import static org.mockito.Mockito.*;
 
 public class NoticeRestControllerTest {
     private static final long NOTICE_ID = 1;
-    private static final int USER_ID = 1;
-    private static final String USER_EMAIL = "user_email";
+    private static final int EMPLOYEE_ID = 1;
+    private static final String EMPLOYEE_EMAIL = "employee_email";
 
     private final NoticeService noticeService = Mockito.mock(NoticeService.class);
     private final NoticeScheduleService noticeScheduleService = mock(NoticeScheduleService.class);
@@ -40,11 +40,11 @@ public class NoticeRestControllerTest {
 
     @Test
     public void getNotices() {
-        SessionUserPrincipal sessionUserPrincipal = createSessionUserPrincipal();
+        SessionEmployeePrincipal sessionEmployeePrincipal = createSessionEmployeePrincipal();
 
-        when(noticeService.getNoticesByUserId(sessionUserPrincipal.getId())).thenReturn(List.of(createNotice()));
+        when(noticeService.getNoticesByEmployeeId(sessionEmployeePrincipal.getId())).thenReturn(List.of(createNotice()));
 
-        List<NoticeDto> notices = noticeRestController.getNotices(sessionUserPrincipal);
+        List<NoticeDto> notices = noticeRestController.getNotices(sessionEmployeePrincipal);
 
         assertEquals(1, notices.size());
         assertEquals(NOTICE_ID, notices.get(0).getId());
@@ -52,19 +52,19 @@ public class NoticeRestControllerTest {
 
     @Test
     public void getNotice() {
-        SessionUserPrincipal sessionUserPrincipal = createSessionUserPrincipal();
+        SessionEmployeePrincipal sessionEmployeePrincipal = createSessionEmployeePrincipal();
 
-        when(noticeService.getNoticeByIdAndUserId(NOTICE_ID, USER_ID)).thenReturn(Optional.of(createNotice()));
+        when(noticeService.getNoticeByIdAndEmployeeId(NOTICE_ID, EMPLOYEE_ID)).thenReturn(Optional.of(createNotice()));
 
-        assertEquals(NOTICE_ID, noticeRestController.getNotice(sessionUserPrincipal, NOTICE_ID).getId());
+        assertEquals(NOTICE_ID, noticeRestController.getNotice(sessionEmployeePrincipal, NOTICE_ID).getId());
     }
 
     @Test
     public void getNotice_shouldReturnResourceNotFoundException() {
-        when(noticeService.getNoticeByIdAndUserId(NOTICE_ID, USER_ID)).thenReturn(Optional.empty());
+        when(noticeService.getNoticeByIdAndEmployeeId(NOTICE_ID, EMPLOYEE_ID)).thenReturn(Optional.empty());
 
         assertThrows(ResourceNotFoundException.class,
-                () -> noticeRestController.getNotice(createSessionUserPrincipal(), NOTICE_ID));
+                () -> noticeRestController.getNotice(createSessionEmployeePrincipal(), NOTICE_ID));
     }
 
     @Test
@@ -72,16 +72,16 @@ public class NoticeRestControllerTest {
         NoticeReadDto noticeReadDto = new NoticeReadDto();
         noticeReadDto.setNoticeIds(Set.of(NOTICE_ID));
 
-        noticeRestController.readNoticesByIds(createSessionUserPrincipal(), noticeReadDto);
+        noticeRestController.readNoticesByIds(createSessionEmployeePrincipal(), noticeReadDto);
 
-        verify(noticeService).readNoticesByIdsAndUserId(noticeReadDto.getNoticeIds(), USER_ID);
+        verify(noticeService).readNoticesByIdsAndEmployeeId(noticeReadDto.getNoticeIds(), EMPLOYEE_ID);
     }
 
     @Test
     public void readAllNotices() {
-        noticeRestController.readAllNotices(createSessionUserPrincipal());
+        noticeRestController.readAllNotices(createSessionEmployeePrincipal());
 
-        verify(noticeService).readAllNoticesByUserId(USER_ID);
+        verify(noticeService).readAllNoticesByEmployeeId(EMPLOYEE_ID);
     }
 
     @Test
@@ -89,31 +89,31 @@ public class NoticeRestControllerTest {
         NoticeDeleteDto noticeDeleteDto = new NoticeDeleteDto();
         noticeDeleteDto.setNoticeIds(Set.of(NOTICE_ID));
 
-        noticeRestController.deleteNoticesByIds(createSessionUserPrincipal(), noticeDeleteDto);
+        noticeRestController.deleteNoticesByIds(createSessionEmployeePrincipal(), noticeDeleteDto);
 
-        verify(noticeService).deleteNoticesByIdsAndUserId(noticeDeleteDto.getNoticeIds(), USER_ID);
+        verify(noticeService).deleteNoticesByIdsAndEmployeeId(noticeDeleteDto.getNoticeIds(), EMPLOYEE_ID);
     }
 
     @Test
     public void deleteAllNotices() {
-        noticeRestController.deleteAllNotices(createSessionUserPrincipal());
+        noticeRestController.deleteAllNotices(createSessionEmployeePrincipal());
 
-        verify(noticeService).deleteAllNoticesByUserId(USER_ID);
+        verify(noticeService).deleteAllNoticesByEmployeeId(EMPLOYEE_ID);
     }
 
-    private SessionUserPrincipal createSessionUserPrincipal() {
-        SessionUserPrincipal sessionUserPrincipal = new SessionUserPrincipal(USER_ID, USER_EMAIL);
-        UserRole userRole = new UserRole();
-        userRole.setUserId(USER_ID);
-        userRole.setRoleId(UserRoleEnum.ROLE_USER);
-        sessionUserPrincipal.setAllRoles(List.of(userRole), List.of());
-        return sessionUserPrincipal;
+    private SessionEmployeePrincipal createSessionEmployeePrincipal() {
+        SessionEmployeePrincipal sessionEmployeePrincipal = new SessionEmployeePrincipal(EMPLOYEE_ID, EMPLOYEE_EMAIL);
+        EmployeeRole employeeRole = new EmployeeRole();
+        employeeRole.setEmployeeId(EMPLOYEE_ID);
+        employeeRole.setRoleId(EmployeeRoleEnum.ROLE_EMPLOYEE);
+        sessionEmployeePrincipal.setAllRoles(List.of(employeeRole), List.of());
+        return sessionEmployeePrincipal;
     }
 
     private Notice createNotice() {
         Notice notice = new Notice();
         notice.setId(NOTICE_ID);
-        notice.setUserId(USER_ID);
+        notice.setEmployeeId(EMPLOYEE_ID);
         return notice;
     }
 }

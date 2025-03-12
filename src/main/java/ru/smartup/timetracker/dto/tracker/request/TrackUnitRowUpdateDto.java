@@ -10,7 +10,7 @@ import java.util.List;
 @Data
 public class TrackUnitRowUpdateDto {
     @Min(0)
-    private int userId;
+    private int employeeId;
 
     @Min(1)
     private long taskId;

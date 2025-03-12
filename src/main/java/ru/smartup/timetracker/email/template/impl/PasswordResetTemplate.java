@@ -20,7 +20,7 @@ public class PasswordResetTemplate extends BaseEmailTemplate {
                 PASSWORD_RESET_TEMPLATE,
                 EmailConstant.SubjectName.PASSWORD_RESET_SUBJECT,
                 Map.of(
-                        EmailConstant.PropertyName.NAME_PROPERTY, data.getUsername()
+                        EmailConstant.PropertyName.NAME_PROPERTY, data.getEmployeeName()
                 )
         );
     }

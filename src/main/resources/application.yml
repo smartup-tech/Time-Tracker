@@ -40,6 +40,9 @@ spring:
           timeout: 5000
           writetimeout: 5000
         debug: false
+  mattermost:
+    webhook-url: "${MM_NOTIFICATION_URL:https://example.com/webhook}"
+    time-tracker-url: "${TIME_TRACKER_URL:https://time-tracker.ru/}"
   thymeleaf:
     prefix: classpath:/mail/template/
     suffix: .html

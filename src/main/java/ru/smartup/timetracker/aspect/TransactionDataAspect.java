@@ -9,13 +9,13 @@ import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
-import ru.smartup.timetracker.core.SessionUserPrincipal;
+import ru.smartup.timetracker.core.SessionEmployeePrincipal;
 
 @RequiredArgsConstructor
 @Aspect
 @Component
 public class TransactionDataAspect {
-    private static final String SESSION_DATA_QUERY = "SELECT set_config('session.user_id', '%s', true)";
+    private static final String SESSION_DATA_QUERY = "SELECT set_config('session.employee_id', '%s', true)";
 
     private final JdbcTemplate jdbcTemplate;
 
@@ -25,11 +25,11 @@ public class TransactionDataAspect {
 
     @Before("callTransactionalMethod()")
     public void setSessionDataToTransaction() {
-        int userId = 0;
+        int employeeId = 0;
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication != null && !AnonymousAuthenticationToken.class.isAssignableFrom(authentication.getClass())) {
-            userId = ((SessionUserPrincipal) authentication.getPrincipal()).getId();
+            employeeId = ((SessionEmployeePrincipal) authentication.getPrincipal()).getId();
         }
-        jdbcTemplate.execute(String.format(SESSION_DATA_QUERY, userId));
+        jdbcTemplate.execute(String.format(SESSION_DATA_QUERY, employeeId));
     }
 }

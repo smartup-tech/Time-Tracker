@@ -14,10 +14,10 @@ public class UnfreezeHoursTemplate extends BaseEmailTemplate {
 
     @Override
     public EmailXmlTemplate getTemplate(final Notice notice) {
-        return getUserRegistrationTemplateGenerator((NoticeUnfreeze) notice.getData());
+        return getEmployeeRegistrationTemplateGenerator((NoticeUnfreeze) notice.getData());
     }
 
-    private EmailXmlTemplate getUserRegistrationTemplateGenerator(final NoticeUnfreeze data) {
+    private EmailXmlTemplate getEmployeeRegistrationTemplateGenerator(final NoticeUnfreeze data) {
         return new EmailXmlTemplate(
                 UN_FREEZE_TEMPLATE,
                 EmailConstant.SubjectName.UN_FREEZE_SUBJECT,

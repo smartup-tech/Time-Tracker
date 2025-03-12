@@ -16,14 +16,14 @@ public interface ProjectRepository extends JpaRepository<Project, Integer>, JpaS
 
     Optional<Project> findByIdAndIsArchivedFalse(int projectId);
 
-    @Query("SELECT p FROM Project p JOIN UserProjectRole upr ON upr.projectId = p.id WHERE upr.userId = :userId" +
+    @Query("SELECT p FROM Project p JOIN EmployeeProjectRole epr ON epr.projectId = p.id WHERE epr.employeeId = :employeeId" +
             " AND p.isArchived = false")
-    List<Project> findAllNotArchivedProjectsOfUser(@Param("userId") int userId);
+    List<Project> findAllNotArchivedProjectsOfEmployee(@Param("employeeId") int employeeId);
 
-    @Query("SELECT p.id as id, p.name as name, p.isArchived as archived, upr.externalRate as externalRate, " +
-            "upr.projectRoleId as projectRoleId FROM Project p " +
-            "JOIN UserProjectRole upr ON upr.projectId = p.id WHERE upr.userId = :userId AND p.isArchived = false")
-    List<ProjectWithRole> findAllNotArchivedProjectsOfUserWithRole(@Param("userId") int userId);
+    @Query("SELECT p.id as id, p.name as name, p.isArchived as archived, epr.externalRate as externalRate, " +
+            "epr.projectRoleId as projectRoleId FROM Project p " +
+            "JOIN EmployeeProjectRole epr ON epr.projectId = p.id WHERE epr.employeeId = :employeeId AND p.isArchived = false")
+    List<ProjectWithRole> findAllNotArchivedProjectsOfEmployeeWithRole(@Param("employeeId") int employeeId);
 
     @Query(value = "SELECT EXISTS(SELECT 1 FROM project WHERE name = :projectName)", nativeQuery = true)
     boolean isNotUnique(@Param("projectName") String projectName);

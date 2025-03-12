@@ -18,7 +18,7 @@ public class EmailTemplateConfig {
         return Map.of(
                 NoticeTypeEnum.PASSWORD_RECOVERY, new PasswordRecoveryTemplate(passwordRecoveryLink),
                 NoticeTypeEnum.PASSWORD_UPDATE, new PasswordUpdateTemplate(),
-                NoticeTypeEnum.REGISTER_NEW_USER, new UserRegistrationTemplate(passwordRegistrationLink),
+                NoticeTypeEnum.REGISTER_NEW_EMPLOYEE, new EmployeeRegistrationTemplate(passwordRegistrationLink),
                 NoticeTypeEnum.PASSWORD_RESET, new PasswordResetTemplate(),
                 NoticeTypeEnum.FREEZE_PREPARE, new ScheduleFreezeTemplate(),
                 NoticeTypeEnum.FREEZE_CANCEL, new CancelScheduleFreezeTemplate(),

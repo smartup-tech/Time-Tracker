@@ -5,18 +5,19 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import ru.smartup.timetracker.entity.TrackUnit;
-import ru.smartup.timetracker.pojo.SubmittedWorkDaysForUsers;
-import ru.smartup.timetracker.pojo.TrackUnitProjectNumberUsersHours;
+import ru.smartup.timetracker.pojo.SubmittedWorkDaysForEmployees;
+import ru.smartup.timetracker.pojo.TrackUnitProjectNumberEmployeesHours;
 import ru.smartup.timetracker.pojo.TrackUnitProjectTask;
 
+import java.time.LocalDate;
 import java.util.Date;
 import java.util.List;
 import java.util.Set;
 
 public interface TrackUnitRepository extends JpaRepository<TrackUnit, Long> {
-    @Query(value = "SELECT EXISTS (SELECT 1 FROM track_unit tu WHERE tu.user_id = :userId AND (tu.status = 'CREATED'" +
+    @Query(value = "SELECT EXISTS (SELECT 1 FROM track_unit tu WHERE tu.employee_id = :employeeId AND (tu.status = 'CREATED'" +
             " OR tu.status = 'SUBMITTED') AND tu.hours > 0)", nativeQuery = true)
-    boolean hasNoneFinalTrackUnitForUser(@Param("userId") int userId);
+    boolean hasNoneFinalTrackUnitForEmployee(@Param("employeeId") int employeeId);
 
     @Query(value = "SELECT EXISTS (SELECT 1 FROM task t JOIN track_unit tu ON t.id = tu.task_id WHERE" +
             " t.project_id = :projectId AND (tu.status = 'CREATED' OR tu.status = 'SUBMITTED') AND tu.hours > 0)", nativeQuery = true)
@@ -28,27 +29,27 @@ public interface TrackUnitRepository extends JpaRepository<TrackUnit, Long> {
 
     @Query("SELECT new TrackUnit(tu.id, p.id, p.name, t.id, t.name, tu.workDay, tu.hours, tu.status, tu.billable, tu.comment, tu.frozen, tu.rejectReason) " +
             "FROM TrackUnit tu JOIN Task t ON t.id = tu.taskId JOIN Project p ON p.id = t.projectId " +
-            "WHERE tu.userId = :userId AND tu.workDay BETWEEN :firstDayOfWeek AND :lastDayOfWeek")
-    List<TrackUnit> findAllByUserIdAndRange(int userId, Date firstDayOfWeek, Date lastDayOfWeek);
+            "WHERE tu.employeeId = :employeeId AND tu.workDay BETWEEN :firstDayOfWeek AND :lastDayOfWeek")
+    List<TrackUnit> findAllByEmployeeIdAndRange(int employeeId, Date firstDayOfWeek, Date lastDayOfWeek);
 
-    List<TrackUnit> findAllByUserIdAndTaskIdAndWorkDayBetween(int userId, long taskId, Date firstDayOfWeek, Date lastDayOfWeek);
+    List<TrackUnit> findAllByEmployeeIdAndTaskIdAndWorkDayBetween(int employeeId, long taskId, Date firstDayOfWeek, Date lastDayOfWeek);
 
     @Query("SELECT new TrackUnit(tu.id, p.id, p.name, t.id, t.name, tu.workDay, tu.hours, tu.status, tu.billable, tu.comment, tu.frozen, tu.rejectReason) " +
             "FROM TrackUnit tu JOIN Task t ON t.id = tu.taskId JOIN Project p ON p.id = t.projectId " +
-            "WHERE p.id IN :projectIds AND tu.userId = :userId AND tu.workDay BETWEEN :firstDayOfWeek AND :lastDayOfWeek")
-    List<TrackUnit> findAllByUserIdAndProjectIdsAndRange(int userId, Set<Integer> projectIds,
-                                                         Date firstDayOfWeek, Date lastDayOfWeek);
+            "WHERE p.id IN :projectIds AND tu.employeeId = :employeeId AND tu.workDay BETWEEN :firstDayOfWeek AND :lastDayOfWeek")
+    List<TrackUnit> findAllByEmployeeIdAndProjectIdsAndRange(int employeeId, Set<Integer> projectIds,
+                                                             Date firstDayOfWeek, Date lastDayOfWeek);
 
     @Query(value = "SELECT date_trunc('week', work_day) as week, sum(hours) as hours " +
-            "FROM track_unit WHERE status IN ('CREATED', 'REJECTED') AND user_id = :userId AND frozen = false " +
+            "FROM track_unit WHERE status IN ('CREATED', 'REJECTED') AND employee_id = :employeeId AND frozen = false " +
             "GROUP BY date_trunc('week', work_day) HAVING sum(hours) > 0 ORDER BY date_trunc('week', work_day)", nativeQuery = true)
-    List<TrackUnitWeekHours> findUnsubmittedHours(int userId);
+    List<TrackUnitWeekHours> findUnsubmittedHours(int employeeId);
 
     @Query(value = "SELECT date_trunc('week', tu.work_day) as week, sum(tu.hours) as hours " +
             "FROM track_unit tu JOIN task t ON t.id = tu.task_id " +
-            "WHERE tu.user_id = :userId AND t.project_id IN :projectIds AND tu.status IN ('CREATED', 'REJECTED') AND frozen = false " +
+            "WHERE tu.employee_id = :employeeId AND t.project_id IN :projectIds AND tu.status IN ('CREATED', 'REJECTED') AND frozen = false " +
             "GROUP BY date_trunc('week', tu.work_day) HAVING sum(tu.hours) > 0 ORDER BY date_trunc('week', tu.work_day)", nativeQuery = true)
-    List<TrackUnitWeekHours> findUnsubmittedHours(int userId, Set<Integer> projectIds);
+    List<TrackUnitWeekHours> findUnsubmittedHours(int employeeId, Set<Integer> projectIds);
 
     @Query(value = "SELECT date_trunc('week', work_day) as week, sum(hours) as hours " +
             "FROM track_unit WHERE status = 'SUBMITTED' AND frozen = false " +
@@ -80,7 +81,7 @@ public interface TrackUnitRepository extends JpaRepository<TrackUnit, Long> {
     List<TrackUnitByProjectsHours> findSubmittedHoursByProjects(java.sql.Date week, Set<Integer> projectIds);
 
     @Query("SELECT new TrackUnit(tu.id, u.id, u.firstName, u.lastName, t.id, t.name, tu.workDay, tu.hours, tu.status, " +
-            "tu.billable, tu.comment) FROM TrackUnit tu JOIN User u ON u.id = tu.userId JOIN Task t " +
+            "tu.billable, tu.comment) FROM TrackUnit tu JOIN Employee u ON u.id = tu.employeeId JOIN Task t " +
             "ON t.id = tu.taskId WHERE tu.status = 'SUBMITTED' AND tu.frozen = false AND date_trunc('week', tu.workDay) = :week " +
             "AND t.projectId = :projectId ORDER BY u.firstName, u.lastName")
     List<TrackUnit> findAllSubmittedByWeekAndProjectId(java.sql.Date week, int projectId);
@@ -92,21 +93,31 @@ public interface TrackUnitRepository extends JpaRepository<TrackUnit, Long> {
     @Query("UPDATE TrackUnit SET frozen = true WHERE workDay <= :freezeDate AND frozen = false")
     int freezeAllByDate(final Date freezeDate);
 
+    /**
+     * Устанавливает поле флага блокировки в значение false для всех TrackUnit'ов в интервале двух дат
+     * @param startDate левая граница разблокировки не включительно
+     * @param endDate правая граница разблокировки включительно
+     * @return количество разблокированных записей
+     */
     @Modifying
-    @Query("UPDATE TrackUnit SET frozen = false WHERE workDay >= :freezeDate AND frozen = true")
-    int unfreezeAllByDate(final Date freezeDate);
+    @Query("UPDATE TrackUnit " +
+           "SET frozen = false " +
+           "WHERE workDay > coalesce(CAST(:startDate AS timestamp), '-infinity') " +
+           "AND workDay <= coalesce(CAST(:endDate AS timestamp), 'infinity') " +
+           "AND frozen = true")
+    int unfreezeAllByDate(LocalDate startDate, LocalDate endDate);
 
     @Modifying
     @Query(value = "UPDATE track_unit SET status = 'SUBMITTED' " +
-            "WHERE frozen = false AND user_id = :userId AND hours > 0 AND status IN ('CREATED', 'REJECTED') " +
+            "WHERE frozen = false AND employee_id = :employeeId AND hours > 0 AND status IN ('CREATED', 'REJECTED') " +
             "AND date_trunc('week', work_day) IN :weeks", nativeQuery = true)
-    void submit(int userId, List<java.sql.Date> weeks);
+    void submit(int employeeId, List<java.sql.Date> weeks);
 
     @Modifying
     @Query(value = "UPDATE track_unit SET status = 'SUBMITTED' FROM task t " +
-            "WHERE t.id = task_id AND frozen = false AND user_id = :userId AND hours > 0 AND t.project_id IN :projectIds " +
+            "WHERE t.id = task_id AND frozen = false AND employee_id = :employeeId AND hours > 0 AND t.project_id IN :projectIds " +
             "AND status IN ('CREATED', 'REJECTED') AND date_trunc('week', work_day) IN :weeks", nativeQuery = true)
-    void submit(int userId, Set<Integer> projectIds, List<java.sql.Date> weeks);
+    void submit(int employeeId, Set<Integer> projectIds, List<java.sql.Date> weeks);
 
     @Modifying
     @Query("UPDATE TrackUnit SET status = 'APPROVED', rejectReason = null WHERE id IN (:trackUnitIds) " +
@@ -118,36 +129,36 @@ public interface TrackUnitRepository extends JpaRepository<TrackUnit, Long> {
             "AND frozen = false AND hours > 0 AND status = 'SUBMITTED'")
     void reject(List<Long> trackUnitIds, String rejectReason);
 
-    @Query("SELECT new ru.smartup.timetracker.pojo.TrackUnitProjectNumberUsersHours(t.projectId, COUNT(DISTINCT tu.userId), sum(tu.hours)) " +
+    @Query("SELECT new ru.smartup.timetracker.pojo.TrackUnitProjectNumberEmployeesHours(t.projectId, COUNT(DISTINCT tu.employeeId), sum(tu.hours)) " +
             "FROM TrackUnit tu JOIN Task t on t.id = tu.taskId WHERE tu.status = 'SUBMITTED' GROUP BY t.projectId")
-    List<TrackUnitProjectNumberUsersHours> findSubmittedHoursAndNumberUsersForProjects();
+    List<TrackUnitProjectNumberEmployeesHours> findSubmittedHoursAndNumberEmployeesForProjects();
 
-    @Query("SELECT new ru.smartup.timetracker.pojo.TrackUnitProjectTask(tu.userId, tu.id, tu.workDay, p.id, p.name, t.id, t.name) " +
+    @Query("SELECT new ru.smartup.timetracker.pojo.TrackUnitProjectTask(tu.employeeId, tu.id, tu.workDay, p.id, p.name, t.id, t.name) " +
             "FROM TrackUnit tu JOIN Task t ON t.id = tu.taskId JOIN Project p ON p.id = t.projectId WHERE tu.id IN :trackUnitIds")
     List<TrackUnitProjectTask> findAllTrackUnitInfo(List<Long> trackUnitIds);
 
-    @Query("SELECT new ru.smartup.timetracker.pojo.SubmittedWorkDaysForUsers(" +
+    @Query("SELECT new ru.smartup.timetracker.pojo.SubmittedWorkDaysForEmployees(" +
             "u.id, u.firstName, u.lastName, tu.workDay, " +
             "p.id, p.name, tu.id, t.id, t.name, tu.hours) " +
             "FROM TrackUnit tu " +
-            "JOIN User u on tu.userId = u.id " +
+            "JOIN Employee u on tu.employeeId = u.id " +
             "JOIN Task t on tu.taskId = t.id " +
             "JOIN Project p ON p.id = t.projectId " +
             "WHERE tu.status = 'SUBMITTED' AND tu.frozen = false AND tu.workDay >= :startDate AND tu.workDay <= :endDate " +
             "GROUP BY (u.id, p.id, tu.id, t.id, tu.workDay, tu.hours) " +
             "ORDER BY tu.workDay, u.id, p.id, t.id")
-    List<SubmittedWorkDaysForUsers> findAllSubmittedHoursForUser(final Date startDate, final Date endDate);
+    List<SubmittedWorkDaysForEmployees> findAllSubmittedHoursForEmployee(final Date startDate, final Date endDate);
 
-    @Query("SELECT new ru.smartup.timetracker.pojo.SubmittedWorkDaysForUsers(" +
+    @Query("SELECT new ru.smartup.timetracker.pojo.SubmittedWorkDaysForEmployees(" +
             "u.id, u.firstName, u.lastName, tu.workDay, " +
             "p.id, p.name, tu.id, t.id, t.name, tu.hours) " +
             "FROM TrackUnit tu " +
-            "JOIN User u on tu.userId = u.id " +
+            "JOIN Employee u on tu.employeeId = u.id " +
             "JOIN Task t on tu.taskId = t.id " +
             "JOIN Project p ON p.id = t.projectId " +
             "WHERE tu.status = 'SUBMITTED' AND tu.frozen = false AND p.id IN :projectIds AND tu.workDay >= :startDate AND tu.workDay <= :endDate " +
             "GROUP BY (u.id, p.id, tu.id, t.id, tu.workDay, tu.hours) " +
             "ORDER BY tu.workDay, u.id, p.id, t.id")
-    List<SubmittedWorkDaysForUsers> findAllSubmittedHoursForUser(final Set<Integer> projectIds, final Date startDate, final Date endDate);
+    List<SubmittedWorkDaysForEmployees> findAllSubmittedHoursForEmployee(final Set<Integer> projectIds, final Date startDate, final Date endDate);
 
 }

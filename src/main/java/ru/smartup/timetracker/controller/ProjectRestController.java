@@ -1,31 +1,26 @@
 package ru.smartup.timetracker.controller;
 
 import lombok.RequiredArgsConstructor;
-import org.apache.commons.lang3.StringUtils;
 import org.modelmapper.ModelMapper;
 import org.springframework.core.convert.ConversionService;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
-import ru.smartup.timetracker.core.CurrentSessionUserPrincipal;
-import ru.smartup.timetracker.core.SessionUserPrincipal;
+import ru.smartup.timetracker.core.CurrentSessionEmployeePrincipal;
+import ru.smartup.timetracker.core.SessionEmployeePrincipal;
 import ru.smartup.timetracker.dto.ErrorCode;
 import ru.smartup.timetracker.dto.PageableRequestParamDto;
 import ru.smartup.timetracker.dto.QueryArchiveParamRequestDto;
 import ru.smartup.timetracker.dto.project.request.ProjectCreateDto;
-import ru.smartup.timetracker.dto.project.request.UserProjectRoleDeleteDto;
-import ru.smartup.timetracker.dto.project.request.UserProjectRoleModifyDto;
+import ru.smartup.timetracker.dto.project.request.EmployeeProjectRoleDeleteDto;
+import ru.smartup.timetracker.dto.project.request.EmployeeProjectRoleModifyDto;
 import ru.smartup.timetracker.dto.project.response.*;
+import ru.smartup.timetracker.entity.Employee;
 import ru.smartup.timetracker.entity.Project;
 import ru.smartup.timetracker.entity.field.enumerated.ProjectRoleEnum;
 import ru.smartup.timetracker.entity.field.sort.ProjectSortFieldEnum;
 import ru.smartup.timetracker.entity.Task;
-import ru.smartup.timetracker.entity.User;
-import ru.smartup.timetracker.entity.UserProjectRole;
-import ru.smartup.timetracker.entity.field.sort.UserSortFieldEnum;
+import ru.smartup.timetracker.entity.EmployeeProjectRole;
 import ru.smartup.timetracker.exception.ForbiddenException;
 import ru.smartup.timetracker.exception.NotProcessedTrackUnitsException;
 import ru.smartup.timetracker.exception.NotUniqueDataException;
@@ -43,28 +38,28 @@ import java.util.stream.Collectors;
 @RequestMapping("/api/projects")
 public class ProjectRestController {
     private final ProjectService projectService;
-    private final RelationUserRolesService relationUserRolesService;
+    private final RelationEmployeeRolesService relationEmployeeRolesService;
     private final TrackUnitService trackUnitService;
-    private final UserService userService;
+    private final EmployeeService employeeService;
     private final TaskService taskService;
     private final ModelMapper modelMapper;
     private final ConversionService conversionService;
 
     @PreAuthorize("getPrincipal().isAdmin() or getPrincipal().isManager()")
     @GetMapping
-    public Page<ProjectShortDto> getProjectsByPage(final @CurrentSessionUserPrincipal SessionUserPrincipal currentSessionUserPrincipal,
+    public Page<ProjectShortDto> getProjectsByPage(final @CurrentSessionEmployeePrincipal SessionEmployeePrincipal currentSessionEmployeePrincipal,
                                                    final @Valid QueryArchiveParamRequestDto positionRequestParam,
                                                    final @Valid PageableRequestParamDto<ProjectSortFieldEnum> pageableRequestParam) {
         pageableRequestParam.setSortBy(conversionService.convert(pageableRequestParam.getSortBy(), ProjectSortFieldEnum.class));
 
         Page<ProjectShortDto> projects;
-        if (currentSessionUserPrincipal.isAdmin()) {
+        if (currentSessionEmployeePrincipal.isAdmin()) {
             projects = projectService.getProjects(positionRequestParam, pageableRequestParam);
         } else {
-            Set<Integer> projectIds = currentSessionUserPrincipal.getProjectIdsByProjectRole(ProjectRoleEnum.MANAGER);
+            Set<Integer> projectIds = currentSessionEmployeePrincipal.getProjectIdsByProjectRole(ProjectRoleEnum.MANAGER);
             if (projectIds.isEmpty()) {
-                throw new ForbiddenException("Project ids were not found for user with manager role; userId = "
-                        + currentSessionUserPrincipal.getId() + ".");
+                throw new ForbiddenException("Project ids were not found for employee with manager role; employeeId = "
+                        + currentSessionEmployeePrincipal.getId() + ".");
             }
             projects = projectService.getProjectsByIds(projectIds, positionRequestParam, pageableRequestParam);
         }
@@ -85,9 +80,9 @@ public class ProjectRestController {
             throw new ResourceNotFoundException("Project was not found by projectId = " + projectId + ".");
         }
         ProjectDetailDto project = modelMapper.map(existProject.get(), ProjectDetailDto.class);
-        List<User> users = userService.getUsersFromProject(projectId);
-        project.setUsers(users.stream()
-                .map(UserInProjectDto::new)
+        List<Employee> employees = employeeService.getEmployeesFromProject(projectId);
+        project.setEmployees(employees.stream()
+                .map(EmployeeInProjectDto::new)
                 .collect(Collectors.toList()));
         List<Task> tasks = taskService.getTasksFromProject(projectId);
         project.setTasks(tasks.stream()
@@ -158,62 +153,62 @@ public class ProjectRestController {
     /**
      * Добавить пользователя в проект с указанной ролью или обновить
      *
-     * @param userProjectRoleModifyDto данные пользователя, добавляемого в проект
+     * @param employeeProjectRoleModifyDto данные пользователя, добавляемого в проект
      * @param projectId                идентификатор проекта
      */
     @PreAuthorize("getPrincipal().isAdmin() or getPrincipal().isManager(#projectId)")
-    @PostMapping("/{projectId}/modifyProjectUser")
-    public void modifyProjectUser(@Valid @RequestBody UserProjectRoleModifyDto userProjectRoleModifyDto,
-                                  @PathVariable("projectId") int projectId) {
+    @PostMapping("/{projectId}/modifyProjectEmployee")
+    public void modifyProjectEmployee(@Valid @RequestBody EmployeeProjectRoleModifyDto employeeProjectRoleModifyDto,
+                                      @PathVariable("projectId") int projectId) {
         Optional<Project> existProject = projectService.getNotArchivedProject(projectId);
         if (existProject.isEmpty()) {
             throw new ResourceNotFoundException("Active project was not found by projectId = " + projectId + ".");
         }
-        Optional<User> existUser = userService.getNotArchivedUser(userProjectRoleModifyDto.getUserId());
-        if (existUser.isEmpty()) {
-            throw new ResourceNotFoundException("Active user was not found by userId = "
-                    + userProjectRoleModifyDto.getUserId() + ".");
+        Optional<Employee> existEmployee = employeeService.getNotArchivedEmployee(employeeProjectRoleModifyDto.getEmployeeId());
+        if (existEmployee.isEmpty()) {
+            throw new ResourceNotFoundException("Active employee was not found by employeeId = "
+                    + employeeProjectRoleModifyDto.getEmployeeId() + ".");
         }
-        UserProjectRole userProjectRole = modelMapper.map(userProjectRoleModifyDto, UserProjectRole.class);
-        userProjectRole.setProjectId(projectId);
-        relationUserRolesService.updateUserProjectRole(userProjectRole);
+        EmployeeProjectRole employeeProjectRole = modelMapper.map(employeeProjectRoleModifyDto, EmployeeProjectRole.class);
+        employeeProjectRole.setProjectId(projectId);
+        relationEmployeeRolesService.updateEmployeeProjectRole(employeeProjectRole);
     }
 
     /**
      * Удалить пользователя из проекта
      *
-     * @param userProjectRoleDeleteDto данные пользователя, удаляемого из проекта
+     * @param employeeProjectRoleDeleteDto данные пользователя, удаляемого из проекта
      * @param projectId                идентификатор проекта
      */
     @PreAuthorize("getPrincipal().isAdmin() or getPrincipal().isManager(#projectId)")
-    @PostMapping("/{projectId}/deleteProjectUser")
-    public void deleteProjectUser(@Valid @RequestBody UserProjectRoleDeleteDto userProjectRoleDeleteDto,
-                                  @PathVariable("projectId") int projectId) {
+    @PostMapping("/{projectId}/deleteProjectEmployee")
+    public void deleteProjectEmployee(@Valid @RequestBody EmployeeProjectRoleDeleteDto employeeProjectRoleDeleteDto,
+                                      @PathVariable("projectId") int projectId) {
         Optional<Project> existProject = projectService.getNotArchivedProject(projectId);
         if (existProject.isEmpty()) {
             throw new ResourceNotFoundException("Active project was not found by projectId = " + projectId + ".");
         }
-        Optional<User> existUser = userService.getNotArchivedUser(userProjectRoleDeleteDto.getUserId());
-        if (existUser.isEmpty()) {
-            throw new ResourceNotFoundException("Active user was not found by userId = "
-                    + userProjectRoleDeleteDto.getUserId() + ".");
+        Optional<Employee> existEmployee = employeeService.getNotArchivedEmployee(employeeProjectRoleDeleteDto.getEmployeeId());
+        if (existEmployee.isEmpty()) {
+            throw new ResourceNotFoundException("Active employee was not found by employeeId = "
+                    + employeeProjectRoleDeleteDto.getEmployeeId() + ".");
         }
-        relationUserRolesService.deleteUserProjectRole(userProjectRoleDeleteDto.getUserId(), projectId);
+        relationEmployeeRolesService.deleteEmployeeProjectRole(employeeProjectRoleDeleteDto.getEmployeeId(), projectId);
     }
 
-    @PreAuthorize("getPrincipal().isUser() or getPrincipal().isAdmin()")
-    @GetMapping("/user")
-    public List<ProjectOfUserDto> getProjectsOfUser(@CurrentSessionUserPrincipal SessionUserPrincipal currentSessionUserPrincipal,
-                                                    @RequestParam(defaultValue = "0") int userId) {
-        if (userId <= 0) {
-            userId = currentSessionUserPrincipal.getId();
+    @PreAuthorize("getPrincipal().isEmployee() or getPrincipal().isAdmin()")
+    @GetMapping("/employee")
+    public List<ProjectOfEmployeeDto> getProjectsOfEmployee(@CurrentSessionEmployeePrincipal SessionEmployeePrincipal currentSessionEmployeePrincipal,
+                                                            @RequestParam(defaultValue = "0") int employeeId) {
+        if (employeeId <= 0) {
+            employeeId = currentSessionEmployeePrincipal.getId();
         }
-        if ((currentSessionUserPrincipal.getId() != userId) && !currentSessionUserPrincipal.isAdmin()) {
-            throw new ForbiddenException("User is not admin and is not a selected user; userId = "
-                    + userId + ", current userId = " + currentSessionUserPrincipal.getId() + ".");
+        if ((currentSessionEmployeePrincipal.getId() != employeeId) && !currentSessionEmployeePrincipal.isAdmin()) {
+            throw new ForbiddenException("Employee is not admin and is not a selected employee; employeeId = "
+                    + employeeId + ", current employeeId = " + currentSessionEmployeePrincipal.getId() + ".");
         }
-        return projectService.getNotArchivedProjectsOfUserWithRole(userId).stream()
-                .map(project -> modelMapper.map(project, ProjectOfUserDto.class))
+        return projectService.getNotArchivedProjectsOfEmployeeWithRole(employeeId).stream()
+                .map(project -> modelMapper.map(project, ProjectOfEmployeeDto.class))
                 .collect(Collectors.toList());
     }
 

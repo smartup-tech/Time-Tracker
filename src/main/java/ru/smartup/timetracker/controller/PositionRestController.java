@@ -12,16 +12,15 @@ import ru.smartup.timetracker.dto.PageableRequestParamDto;
 import ru.smartup.timetracker.dto.QueryArchiveParamRequestDto;
 import ru.smartup.timetracker.dto.position.request.PositionCreateDto;
 import ru.smartup.timetracker.dto.position.response.PositionDto;
-import ru.smartup.timetracker.dto.user.response.UserShortDto;
+import ru.smartup.timetracker.dto.employee.response.EmployeeShortDto;
+import ru.smartup.timetracker.entity.Employee;
 import ru.smartup.timetracker.entity.Position;
 import ru.smartup.timetracker.entity.field.sort.PositionSortFieldEnum;
-import ru.smartup.timetracker.entity.User;
-import ru.smartup.timetracker.entity.field.sort.ProjectSortFieldEnum;
 import ru.smartup.timetracker.exception.NotUniqueDataException;
 import ru.smartup.timetracker.exception.RelatedEntitiesFoundException;
 import ru.smartup.timetracker.exception.ResourceNotFoundException;
+import ru.smartup.timetracker.service.EmployeeService;
 import ru.smartup.timetracker.service.PositionService;
-import ru.smartup.timetracker.service.UserService;
 
 import javax.validation.Valid;
 import java.util.List;
@@ -34,7 +33,7 @@ import java.util.stream.Collectors;
 public class PositionRestController {
 
     private final PositionService positionService;
-    private final UserService userService;
+    private final EmployeeService employeeService;
     private final ModelMapper modelMapper;
     private final ConversionService conversionService;
 
@@ -77,7 +76,7 @@ public class PositionRestController {
     @PreAuthorize("getPrincipal().isAdmin()")
     @PatchMapping("/{positionId}")
     public void updatePosition(@Valid @RequestBody PositionCreateDto positionCreateDto,
-                                    @PathVariable("positionId") int positionId) {
+                               @PathVariable("positionId") int positionId) {
         Optional<Position> existPosition = positionService.getNotArchivedPosition(positionId);
         if (existPosition.isEmpty()) {
             throw new ResourceNotFoundException("Active position was not found by positionId = " + positionId + ".");
@@ -98,14 +97,14 @@ public class PositionRestController {
         if (existPosition.isEmpty()) {
             throw new ResourceNotFoundException("Active position was not found by positionId = " + positionId + ".");
         }
-        List<User> users = userService.getNotArchivedUsersWithPosition(positionId);
-        if (!CollectionUtils.isEmpty(users)) {
-            List<UserShortDto> linkedUsers = users.stream()
-                    .map(user -> modelMapper.map(user, UserShortDto.class))
+        List<Employee> employees = employeeService.getNotArchivedEmployeesWithPosition(positionId);
+        if (!CollectionUtils.isEmpty(employees)) {
+            List<EmployeeShortDto> linkedEmployees = employees.stream()
+                    .map(employee -> modelMapper.map(employee, EmployeeShortDto.class))
                     .collect(Collectors.toList());
             throw new RelatedEntitiesFoundException(ErrorCode.RELATED_ENTITIES_FOUND_FOR_POSITION,
-                    "Archive is not available now. Please, check all users with specified position; positionId = "
-                            + positionId + ".", linkedUsers);
+                    "Archive is not available now. Please, check all employees with specified position; positionId = "
+                            + positionId + ".", linkedEmployees);
         }
         positionService.archivePosition(positionId);
     }

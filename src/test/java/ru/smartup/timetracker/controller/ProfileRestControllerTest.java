@@ -3,19 +3,19 @@ package ru.smartup.timetracker.controller;
 import org.apache.commons.lang3.StringUtils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import ru.smartup.timetracker.core.SessionUserPrincipal;
+import ru.smartup.timetracker.core.SessionEmployeePrincipal;
 import ru.smartup.timetracker.core.WebConfig;
 import ru.smartup.timetracker.dto.profile.request.PasswordUpdateDto;
 import ru.smartup.timetracker.dto.profile.request.PersonalDataUpdateDto;
 import ru.smartup.timetracker.dto.profile.response.ProfileDto;
+import ru.smartup.timetracker.entity.Employee;
+import ru.smartup.timetracker.entity.EmployeeProjectRole;
+import ru.smartup.timetracker.entity.EmployeeRole;
+import ru.smartup.timetracker.entity.field.enumerated.EmployeeRoleEnum;
 import ru.smartup.timetracker.entity.field.enumerated.ProjectRoleEnum;
-import ru.smartup.timetracker.entity.User;
-import ru.smartup.timetracker.entity.UserProjectRole;
-import ru.smartup.timetracker.entity.UserRole;
-import ru.smartup.timetracker.entity.field.enumerated.UserRoleEnum;
 import ru.smartup.timetracker.exception.ForbiddenException;
 import ru.smartup.timetracker.exception.InvalidParameterException;
-import ru.smartup.timetracker.service.UserService;
+import ru.smartup.timetracker.service.EmployeeService;
 
 import java.util.List;
 import java.util.Optional;
@@ -26,91 +26,91 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
 public class ProfileRestControllerTest {
-    private static final int USER_ID = 1;
+    private static final int EMPLOYEE_ID = 1;
     private static final int PROJECT_ID = 1;
-    private static final String USER_EMAIL = "user_email";
-    private static final String USER_FIRST_NAME = "user_first_name";
-    private static final String USER_LAST_NAME = "user_last_name";
-    private static final String USER_PASSWORD = "admin";
-    private static final String USER_PASSWORD_HASH = "$2y$10$3XCy114Ep7LCnTFqKE8B4OyD7XR3mu/ziGVB8XWYKWRx.sxFXmOe2";
+    private static final String EMPLOYEE_EMAIL = "employee_email";
+    private static final String EMPLOYEE_FIRST_NAME = "employee_first_name";
+    private static final String EMPLOYEE_LAST_NAME = "employee_last_name";
+    private static final String EMPLOYEE_PASSWORD = "admin";
+    private static final String EMPLOYEE_PASSWORD_HASH = "$2y$10$3XCy114Ep7LCnTFqKE8B4OyD7XR3mu/ziGVB8XWYKWRx.sxFXmOe2";
 
-    private final UserService userService = mock(UserService.class);
+    private final EmployeeService employeeService = mock(EmployeeService.class);
     private ProfileRestController profileRestController;
 
     @BeforeEach
     public void setUp() {
         WebConfig webConfig = new WebConfig();
-        profileRestController = new ProfileRestController(userService, webConfig.modelMapper(), webConfig.passwordEncoder());
+        profileRestController = new ProfileRestController(employeeService, webConfig.modelMapper(), webConfig.passwordEncoder());
     }
 
     @Test
     public void getProfile() {
-        User user = createUser();
+        Employee employee = createEmployee();
 
-        when(userService.getUser(USER_ID)).thenReturn(Optional.of(user));
+        when(employeeService.getEmployee(EMPLOYEE_ID)).thenReturn(Optional.of(employee));
 
-        ProfileDto profileDto = profileRestController.getProfile(createSessionUserPrincipal());
+        ProfileDto profileDto = profileRestController.getProfile(createSessionEmployeePrincipal());
 
-        assertEquals(user.getEmail(), profileDto.getEmail());
-        assertEquals(user.getId(), profileDto.getId());
+        assertEquals(employee.getEmail(), profileDto.getEmail());
+        assertEquals(employee.getId(), profileDto.getId());
         assertEquals(1, profileDto.getProjectRoles().size());
         assertTrue(profileDto.getProjectRoles().contains(ProjectRoleEnum.EMPLOYEE));
         assertEquals(1, profileDto.getRoles().size());
-        assertTrue(profileDto.getRoles().contains(UserRoleEnum.ROLE_USER));
+        assertTrue(profileDto.getRoles().contains(EmployeeRoleEnum.ROLE_EMPLOYEE));
     }
 
     @Test
     public void getProfile_shouldReturnException() {
-        when(userService.getUser(USER_ID)).thenReturn(Optional.empty());
+        when(employeeService.getEmployee(EMPLOYEE_ID)).thenReturn(Optional.empty());
 
-        assertThrows(ForbiddenException.class, () -> profileRestController.getProfile(createSessionUserPrincipal()));
+        assertThrows(ForbiddenException.class, () -> profileRestController.getProfile(createSessionEmployeePrincipal()));
     }
 
     @Test
     public void updatePersonalData() {
-        User user = createUser();
+        Employee employee = createEmployee();
 
-        when(userService.getUser(USER_ID)).thenReturn(Optional.of(user));
+        when(employeeService.getEmployee(EMPLOYEE_ID)).thenReturn(Optional.of(employee));
 
         PersonalDataUpdateDto personalDataUpdateDto = new PersonalDataUpdateDto();
-        personalDataUpdateDto.setFirstName(USER_FIRST_NAME);
-        personalDataUpdateDto.setLastName(USER_LAST_NAME);
+        personalDataUpdateDto.setFirstName(EMPLOYEE_FIRST_NAME);
+        personalDataUpdateDto.setLastName(EMPLOYEE_LAST_NAME);
 
-        ProfileDto profileDto = profileRestController.updatePersonalData(createSessionUserPrincipal(), personalDataUpdateDto);
+        ProfileDto profileDto = profileRestController.updatePersonalData(createSessionEmployeePrincipal(), personalDataUpdateDto);
 
-        assertEquals(user.getEmail(), profileDto.getEmail());
-        assertEquals(user.getId(), profileDto.getId());
+        assertEquals(employee.getEmail(), profileDto.getEmail());
+        assertEquals(employee.getId(), profileDto.getId());
         assertEquals(personalDataUpdateDto.getFirstName(), profileDto.getFirstName());
         assertEquals(personalDataUpdateDto.getLastName(), profileDto.getLastName());
     }
 
     @Test
     public void updatePersonalData_shouldReturnException() {
-        when(userService.getUser(USER_ID)).thenReturn(Optional.empty());
+        when(employeeService.getEmployee(EMPLOYEE_ID)).thenReturn(Optional.empty());
 
         assertThrows(ForbiddenException.class,
-                () -> profileRestController.updatePersonalData(createSessionUserPrincipal(), null));
+                () -> profileRestController.updatePersonalData(createSessionEmployeePrincipal(), null));
     }
 
     @Test
     public void updatePassword() {
         PasswordUpdateDto passwordUpdateDto = new PasswordUpdateDto();
-        passwordUpdateDto.setOldPassword(USER_PASSWORD);
-        passwordUpdateDto.setNewPassword(USER_PASSWORD);
+        passwordUpdateDto.setOldPassword(EMPLOYEE_PASSWORD);
+        passwordUpdateDto.setNewPassword(EMPLOYEE_PASSWORD);
 
-        when(userService.getUser(USER_ID)).thenReturn(Optional.of(createUser()));
+        when(employeeService.getEmployee(EMPLOYEE_ID)).thenReturn(Optional.of(createEmployee()));
 
-        profileRestController.updatePassword(createSessionUserPrincipal(), passwordUpdateDto);
+        profileRestController.updatePassword(createSessionEmployeePrincipal(), passwordUpdateDto);
 
-        verify(userService).updatePassword(anyInt(), anyString(), anyString());
+        verify(employeeService).updatePassword(anyInt(), anyString(), anyString());
     }
 
     @Test
     public void updatePassword_shouldReturnForbiddenException() {
-        when(userService.getUser(USER_ID)).thenReturn(Optional.empty());
+        when(employeeService.getEmployee(EMPLOYEE_ID)).thenReturn(Optional.empty());
 
         assertThrows(ForbiddenException.class,
-                () -> profileRestController.updatePassword(createSessionUserPrincipal(), null));
+                () -> profileRestController.updatePassword(createSessionEmployeePrincipal(), null));
     }
 
     @Test
@@ -118,30 +118,30 @@ public class ProfileRestControllerTest {
         PasswordUpdateDto passwordUpdateDto = new PasswordUpdateDto();
         passwordUpdateDto.setOldPassword(StringUtils.EMPTY);
 
-        when(userService.getUser(USER_ID)).thenReturn(Optional.of(createUser()));
+        when(employeeService.getEmployee(EMPLOYEE_ID)).thenReturn(Optional.of(createEmployee()));
 
         assertThrows(InvalidParameterException.class,
-                () -> profileRestController.updatePassword(createSessionUserPrincipal(), passwordUpdateDto));
+                () -> profileRestController.updatePassword(createSessionEmployeePrincipal(), passwordUpdateDto));
     }
 
-    private SessionUserPrincipal createSessionUserPrincipal() {
-        SessionUserPrincipal sessionUserPrincipal = new SessionUserPrincipal(USER_ID, USER_EMAIL);
-        UserRole userRole = new UserRole();
-        userRole.setUserId(USER_ID);
-        userRole.setRoleId(UserRoleEnum.ROLE_USER);
-        UserProjectRole userProjectRole = new UserProjectRole();
-        userProjectRole.setUserId(USER_ID);
-        userProjectRole.setProjectId(PROJECT_ID);
-        userProjectRole.setProjectRoleId(ProjectRoleEnum.EMPLOYEE);
-        sessionUserPrincipal.setAllRoles(List.of(userRole), List.of(userProjectRole));
-        return sessionUserPrincipal;
+    private SessionEmployeePrincipal createSessionEmployeePrincipal() {
+        SessionEmployeePrincipal sessionEmployeePrincipal = new SessionEmployeePrincipal(EMPLOYEE_ID, EMPLOYEE_EMAIL);
+        EmployeeRole employeeRole = new EmployeeRole();
+        employeeRole.setEmployeeId(EMPLOYEE_ID);
+        employeeRole.setRoleId(EmployeeRoleEnum.ROLE_EMPLOYEE);
+        EmployeeProjectRole employeeProjectRole = new EmployeeProjectRole();
+        employeeProjectRole.setEmployeeId(EMPLOYEE_ID);
+        employeeProjectRole.setProjectId(PROJECT_ID);
+        employeeProjectRole.setProjectRoleId(ProjectRoleEnum.EMPLOYEE);
+        sessionEmployeePrincipal.setAllRoles(List.of(employeeRole), List.of(employeeProjectRole));
+        return sessionEmployeePrincipal;
     }
 
-    private User createUser() {
-        User user = new User();
-        user.setId(USER_ID);
-        user.setEmail(USER_EMAIL);
-        user.setPasswordHash(USER_PASSWORD_HASH);
-        return user;
+    private Employee createEmployee() {
+        Employee employee = new Employee();
+        employee.setId(EMPLOYEE_ID);
+        employee.setEmail(EMPLOYEE_EMAIL);
+        employee.setPasswordHash(EMPLOYEE_PASSWORD_HASH);
+        return employee;
     }
 }

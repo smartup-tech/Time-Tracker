@@ -4,8 +4,8 @@ import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
-import ru.smartup.timetracker.core.CurrentSessionUserPrincipal;
-import ru.smartup.timetracker.core.SessionUserPrincipal;
+import ru.smartup.timetracker.core.CurrentSessionEmployeePrincipal;
+import ru.smartup.timetracker.core.SessionEmployeePrincipal;
 import ru.smartup.timetracker.dto.ErrorCode;
 import ru.smartup.timetracker.dto.project.response.TaskInProjectDto;
 import ru.smartup.timetracker.dto.task.request.TaskCreateDto;
@@ -47,19 +47,19 @@ public class TaskRestController {
                 .collect(Collectors.toList());
     }
 
-    @PreAuthorize("getPrincipal().isUser() or getPrincipal().isAdmin()")
+    @PreAuthorize("getPrincipal().isEmployee() or getPrincipal().isAdmin()")
     @GetMapping("/{taskId}")
-    public TaskDto getTask(@CurrentSessionUserPrincipal SessionUserPrincipal currentSessionUserPrincipal,
+    public TaskDto getTask(@CurrentSessionEmployeePrincipal SessionEmployeePrincipal currentSessionEmployeePrincipal,
                            @PathVariable("taskId") long taskId) {
         Optional<Task> existTask = taskService.getTask(taskId);
         if (existTask.isEmpty()) {
             throw new ResourceNotFoundException("Task was not found by taskId = " + taskId + ".");
         }
         Task task = existTask.get();
-        if (currentSessionUserPrincipal.isNotManagerOrEmployee(task.getProjectId())
-                && !currentSessionUserPrincipal.isAdmin()) {
-            throw new ForbiddenException("User has not admin or manager or employee role in project; userId = "
-                    + currentSessionUserPrincipal.getId() + ", projectId = " + task.getProjectId() + ".");
+        if (currentSessionEmployeePrincipal.isNotManagerOrEmployee(task.getProjectId())
+                && !currentSessionEmployeePrincipal.isAdmin()) {
+            throw new ForbiddenException("Employee has not admin or manager or employee role in project; employeeId = "
+                    + currentSessionEmployeePrincipal.getId() + ", projectId = " + task.getProjectId() + ".");
         }
         return modelMapper.map(task, TaskDto.class);
     }
@@ -83,7 +83,7 @@ public class TaskRestController {
 
     @PreAuthorize("getPrincipal().isAdmin() or getPrincipal().isManager(#taskCreateDto.getProjectId())")
     @PatchMapping("/{taskId}")
-    public void updateTask(@CurrentSessionUserPrincipal SessionUserPrincipal currentSessionUserPrincipal,
+    public void updateTask(@CurrentSessionEmployeePrincipal SessionEmployeePrincipal currentSessionEmployeePrincipal,
                            @Valid @RequestBody TaskCreateDto taskCreateDto,
                            @PathVariable("taskId") long taskId) {
         Optional<Task> existTask = taskService.getNotArchivedTask(taskId);
@@ -96,9 +96,9 @@ public class TaskRestController {
                     + taskCreateDto.getProjectId() + ".");
         }
         Task task = existTask.get();
-        if (currentSessionUserPrincipal.isNotManager(task.getProjectId())) {
-            throw new ForbiddenException("User has not manager role in project; userId = "
-                    + currentSessionUserPrincipal.getId() + ", projectId = " + task.getProjectId() + ".");
+        if (currentSessionEmployeePrincipal.isNotManager(task.getProjectId())) {
+            throw new ForbiddenException("Employee has not manager role in project; employeeId = "
+                    + currentSessionEmployeePrincipal.getId() + ", projectId = " + task.getProjectId() + ".");
         }
         if (taskService.isNotUnique(taskCreateDto.getProjectId(), taskId, taskCreateDto.getName())) {
             throw new NotUniqueDataException(ErrorCode.NOT_UNIQUE_TASK_NAME, "Task with specified name = '"
@@ -111,16 +111,16 @@ public class TaskRestController {
 
     @PreAuthorize("getPrincipal().isAdmin() or getPrincipal().isManager()")
     @PostMapping("/{taskId}/archive")
-    public void archiveTask(@CurrentSessionUserPrincipal SessionUserPrincipal currentSessionUserPrincipal,
+    public void archiveTask(@CurrentSessionEmployeePrincipal SessionEmployeePrincipal currentSessionEmployeePrincipal,
                             @PathVariable("taskId") long taskId) {
         Optional<Task> existTask = taskService.getNotArchivedTask(taskId);
         if (existTask.isEmpty()) {
             throw new ResourceNotFoundException("Active task was not found by taskId = " + taskId + ".");
         }
         Task task = existTask.get();
-        if (currentSessionUserPrincipal.isNotManager(task.getProjectId())) {
-            throw new ForbiddenException("User has not manager role in project; userId = "
-                    + currentSessionUserPrincipal.getId() + ", projectId = " + task.getProjectId() + ".");
+        if (currentSessionEmployeePrincipal.isNotManager(task.getProjectId())) {
+            throw new ForbiddenException("Employee has not manager role in project; employeeId = "
+                    + currentSessionEmployeePrincipal.getId() + ", projectId = " + task.getProjectId() + ".");
         }
         if (trackUnitService.hasNoneFinalTrackUnitForTask(taskId)) {
             throw new NotProcessedTrackUnitsException(ErrorCode.NOT_PROCESSED_TRACK_UNITS_FOR_TASK,

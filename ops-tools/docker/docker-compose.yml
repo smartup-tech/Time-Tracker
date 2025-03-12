@@ -21,7 +21,7 @@ services:
   app:
     # Option 1: Use this if you have created an image (../build-image.sh)
     #image: time-tracker-backend
-    
+
     # Option 2: Or build an image
     build:
       context: ../../
@@ -39,6 +39,8 @@ services:
       EMAIL_PASSWORD: ${EMAIL_PASSWORD}
       ALLOWED_ORIGIN: "http://localhost:8082"
       DOMAIN_NAME: 'timetracker'
+      MM_NOTIFICATION_URL: ${MM_NOTIFICATION_URL}
+      TIME_TRACKER_URL: https://${DOMAIN_NAME}/
     ports:
       - "8080:8080"
     depends_on:

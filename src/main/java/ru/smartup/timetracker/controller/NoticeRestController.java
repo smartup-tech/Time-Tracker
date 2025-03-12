@@ -3,8 +3,8 @@ package ru.smartup.timetracker.controller;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.web.bind.annotation.*;
-import ru.smartup.timetracker.core.CurrentSessionUserPrincipal;
-import ru.smartup.timetracker.core.SessionUserPrincipal;
+import ru.smartup.timetracker.core.CurrentSessionEmployeePrincipal;
+import ru.smartup.timetracker.core.SessionEmployeePrincipal;
 import ru.smartup.timetracker.dto.notice.request.NoticeDeleteDto;
 import ru.smartup.timetracker.dto.notice.request.NoticeReadDto;
 import ru.smartup.timetracker.dto.notice.response.NoticeDto;
@@ -28,44 +28,44 @@ public class NoticeRestController {
     private final ModelMapper modelMapper;
 
     @GetMapping
-    public List<NoticeDto> getNotices(@CurrentSessionUserPrincipal SessionUserPrincipal currentSessionUserPrincipal) {
-        return noticeService.getNoticesByUserId(currentSessionUserPrincipal.getId()).stream()
+    public List<NoticeDto> getNotices(@CurrentSessionEmployeePrincipal SessionEmployeePrincipal currentSessionEmployeePrincipal) {
+        return noticeService.getNoticesByEmployeeId(currentSessionEmployeePrincipal.getId()).stream()
                 .map(notice -> modelMapper.map(notice, NoticeDto.class))
                 .collect(Collectors.toList());
     }
 
     @GetMapping("/unread")
-    public int getNumberUnreadNotices(@CurrentSessionUserPrincipal SessionUserPrincipal currentSessionUserPrincipal) {
-        return noticeService.getNumberUnreadNotices(currentSessionUserPrincipal.getId());
+    public int getNumberUnreadNotices(@CurrentSessionEmployeePrincipal SessionEmployeePrincipal currentSessionEmployeePrincipal) {
+        return noticeService.getNumberUnreadNotices(currentSessionEmployeePrincipal.getId());
     }
 
     @GetMapping("/{id}")
-    public NoticeDto getNotice(@CurrentSessionUserPrincipal SessionUserPrincipal currentSessionUserPrincipal,
+    public NoticeDto getNotice(@CurrentSessionEmployeePrincipal SessionEmployeePrincipal currentSessionEmployeePrincipal,
                                @Min(1) @PathVariable("id") long id) {
-        Notice notice = noticeService.getNoticeByIdAndUserId(id, currentSessionUserPrincipal.getId())
+        Notice notice = noticeService.getNoticeByIdAndEmployeeId(id, currentSessionEmployeePrincipal.getId())
                 .orElseThrow(() -> new ResourceNotFoundException("Notice was not found by id = " + id + "."));
         return modelMapper.map(notice, NoticeDto.class);
     }
 
     @PatchMapping
-    public void readNoticesByIds(@CurrentSessionUserPrincipal SessionUserPrincipal currentSessionUserPrincipal,
+    public void readNoticesByIds(@CurrentSessionEmployeePrincipal SessionEmployeePrincipal currentSessionEmployeePrincipal,
                                  @Valid @RequestBody NoticeReadDto noticeReadDto) {
-        noticeService.readNoticesByIdsAndUserId(noticeReadDto.getNoticeIds(), currentSessionUserPrincipal.getId());
+        noticeService.readNoticesByIdsAndEmployeeId(noticeReadDto.getNoticeIds(), currentSessionEmployeePrincipal.getId());
     }
 
     @PatchMapping("/all")
-    public void readAllNotices(@CurrentSessionUserPrincipal SessionUserPrincipal currentSessionUserPrincipal) {
-        noticeService.readAllNoticesByUserId(currentSessionUserPrincipal.getId());
+    public void readAllNotices(@CurrentSessionEmployeePrincipal SessionEmployeePrincipal currentSessionEmployeePrincipal) {
+        noticeService.readAllNoticesByEmployeeId(currentSessionEmployeePrincipal.getId());
     }
 
     @PutMapping
-    public void deleteNoticesByIds(@CurrentSessionUserPrincipal SessionUserPrincipal currentSessionUserPrincipal,
+    public void deleteNoticesByIds(@CurrentSessionEmployeePrincipal SessionEmployeePrincipal currentSessionEmployeePrincipal,
                                    @Valid @RequestBody NoticeDeleteDto noticeDeleteDto) {
-        noticeService.deleteNoticesByIdsAndUserId(noticeDeleteDto.getNoticeIds(), currentSessionUserPrincipal.getId());
+        noticeService.deleteNoticesByIdsAndEmployeeId(noticeDeleteDto.getNoticeIds(), currentSessionEmployeePrincipal.getId());
     }
 
     @DeleteMapping("/all")
-    public void deleteAllNotices(@CurrentSessionUserPrincipal SessionUserPrincipal currentSessionUserPrincipal) {
-        noticeService.deleteAllNoticesByUserId(currentSessionUserPrincipal.getId());
+    public void deleteAllNotices(@CurrentSessionEmployeePrincipal SessionEmployeePrincipal currentSessionEmployeePrincipal) {
+        noticeService.deleteAllNoticesByEmployeeId(currentSessionEmployeePrincipal.getId());
     }
 }

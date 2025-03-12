@@ -17,7 +17,7 @@ public class SwaggerConfig {
     @Bean
     public Docket api() {
         return new Docket(DocumentationType.SWAGGER_2)
-                .ignoredParameterTypes(SessionUserPrincipal.class, Timestamp.class, HttpSession.class)
+                .ignoredParameterTypes(SessionEmployeePrincipal.class, Timestamp.class, HttpSession.class)
                 .select()
                 .apis(RequestHandlerSelectors.basePackage("ru.smartup.timetracker.controller"))
                 .paths(PathSelectors.any())

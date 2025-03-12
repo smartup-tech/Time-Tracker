@@ -1,6 +1,5 @@
 package ru.smartup.timetracker.controller;
 
-import org.apache.commons.lang3.StringUtils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.modelmapper.ModelMapper;
@@ -13,15 +12,14 @@ import ru.smartup.timetracker.dto.PageableRequestParamDto;
 import ru.smartup.timetracker.dto.QueryArchiveParamRequestDto;
 import ru.smartup.timetracker.dto.position.request.PositionCreateDto;
 import ru.smartup.timetracker.dto.position.response.PositionDto;
+import ru.smartup.timetracker.entity.Employee;
 import ru.smartup.timetracker.entity.Position;
-import ru.smartup.timetracker.entity.field.sort.PositionSortFieldEnum;
-import ru.smartup.timetracker.entity.User;
 import ru.smartup.timetracker.entity.field.sort.PositionSortFieldEnum;
 import ru.smartup.timetracker.exception.NotUniqueDataException;
 import ru.smartup.timetracker.exception.RelatedEntitiesFoundException;
 import ru.smartup.timetracker.exception.ResourceNotFoundException;
+import ru.smartup.timetracker.service.EmployeeService;
 import ru.smartup.timetracker.service.PositionService;
-import ru.smartup.timetracker.service.UserService;
 
 import java.util.List;
 import java.util.Optional;
@@ -30,7 +28,8 @@ import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.*;
 
 public class PositionRestControllerTest {
@@ -41,14 +40,14 @@ public class PositionRestControllerTest {
 
     private PositionRestController positionRestController;
     private final PositionService positionService = mock(PositionService.class);
-    private final UserService userService = mock(UserService.class);
+    private final EmployeeService employeeService = mock(EmployeeService.class);
     private final ConversionService conversionService = mock(ConversionService.class);
     private ModelMapper modelMapper;
 
     @BeforeEach
     public void setUp() {
         modelMapper = new WebConfig().modelMapper();
-        positionRestController = new PositionRestController(positionService, userService, modelMapper, conversionService);
+        positionRestController = new PositionRestController(positionService, employeeService, modelMapper, conversionService);
     }
 
     @Test
@@ -155,7 +154,7 @@ public class PositionRestControllerTest {
     @Test
     public void archivePosition() {
         when(positionService.getNotArchivedPosition(POSITION_ID)).thenReturn(Optional.of(createPositionObj()));
-        when(userService.getNotArchivedUsersWithPosition(POSITION_ID)).thenReturn(List.of());
+        when(employeeService.getNotArchivedEmployeesWithPosition(POSITION_ID)).thenReturn(List.of());
 
         positionRestController.archivePosition(POSITION_ID);
 
@@ -172,7 +171,7 @@ public class PositionRestControllerTest {
     @Test
     public void archivePosition_shouldReturnRelatedEntitiesFoundException() {
         when(positionService.getNotArchivedPosition(POSITION_ID)).thenReturn(Optional.of(createPositionObj()));
-        when(userService.getNotArchivedUsersWithPosition(POSITION_ID)).thenReturn(List.of(new User()));
+        when(employeeService.getNotArchivedEmployeesWithPosition(POSITION_ID)).thenReturn(List.of(new Employee()));
 
         assertThrows(RelatedEntitiesFoundException.class, () -> positionRestController.archivePosition(POSITION_ID));
     }

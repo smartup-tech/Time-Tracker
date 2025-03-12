@@ -9,7 +9,7 @@ import java.util.Set;
 public interface ReportRepository {
     List<ReportHours> getReportHoursForProjects(Set<Integer> projectIds, Date startDate, Date endDate);
 
-    List<ReportHours> getReportHoursForUsers(Set<Integer> projectIds, Date startDate, Date endDate);
+    List<ReportHours> getReportHoursForEmployees(Set<Integer> projectIds, Date startDate, Date endDate);
 
-    List<ReportHours> getReportHoursForCurrentUser(int userId, Date startDate, Date endDate);
+    List<ReportHours> getReportHoursForCurrentEmployee(int employeeId, Date startDate, Date endDate);
 }

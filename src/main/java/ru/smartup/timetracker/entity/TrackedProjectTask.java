@@ -15,8 +15,8 @@ import javax.persistence.*;
 @IdClass(TrackedProjectTaskPK.class)
 public class TrackedProjectTask {
     @Id
-    @Column(name = "user_id")
-    private int userId;
+    @Column(name = "employee_id")
+    private int employeeId;
     @Id
     @Column(name = "task_id")
     private long taskId;

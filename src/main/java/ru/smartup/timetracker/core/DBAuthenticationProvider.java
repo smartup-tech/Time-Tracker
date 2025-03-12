@@ -8,8 +8,8 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
-import ru.smartup.timetracker.entity.User;
-import ru.smartup.timetracker.service.UserService;
+import ru.smartup.timetracker.entity.Employee;
+import ru.smartup.timetracker.service.EmployeeService;
 
 import java.util.Optional;
 
@@ -18,7 +18,7 @@ import java.util.Optional;
 public class DBAuthenticationProvider implements AuthenticationProvider {
     public static final String INVALID_CREDENTIALS = "Invalid credentials";
 
-    private final UserService userService;
+    private final EmployeeService employeeService;
     private final PasswordEncoder passwordEncoder;
 
     @Override
@@ -44,12 +44,12 @@ public class DBAuthenticationProvider implements AuthenticationProvider {
      * @return UsernamePasswordAuthenticationToken токен
      */
     private Optional<UsernamePasswordAuthenticationToken> getUsernamePasswordAuthenticationToken(String email, String password) {
-        Optional<User> userOptional = userService.getNotArchivedUserByEmail(email);
-        userOptional.orElseThrow(() -> new BadCredentialsException(INVALID_CREDENTIALS));
-        User user = userOptional.get();
-        if (passwordEncoder.matches(password, user.getPasswordHash())) {
-            return Optional.of(new UsernamePasswordAuthenticationToken(new SessionUserPrincipal(user.getId(),
-                    user.getEmail()), null, null));
+        Optional<Employee> employeeOptional = employeeService.getNotArchivedEmployeeByEmail(email);
+        employeeOptional.orElseThrow(() -> new BadCredentialsException(INVALID_CREDENTIALS));
+        Employee employee = employeeOptional.get();
+        if (passwordEncoder.matches(password, employee.getPasswordHash())) {
+            return Optional.of(new UsernamePasswordAuthenticationToken(new SessionEmployeePrincipal(employee.getId(),
+                    employee.getEmail()), null, null));
         }
         return Optional.empty();
     }

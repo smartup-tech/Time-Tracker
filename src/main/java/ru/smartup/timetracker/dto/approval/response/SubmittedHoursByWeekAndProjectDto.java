@@ -11,7 +11,7 @@ import java.time.LocalDate;
 public class SubmittedHoursByWeekAndProjectDto {
     private long trackUnitId;
 
-    private int userId;
+    private int employeeId;
 
     private String firstName;
 

@@ -1,7 +1,7 @@
 package ru.smartup.timetracker.dto.freeze.response;
 
 import lombok.Data;
-import ru.smartup.timetracker.dto.user.response.UserShortDto;
+import ru.smartup.timetracker.dto.employee.response.EmployeeShortDto;
 import ru.smartup.timetracker.entity.field.enumerated.FreezeRecordStatusEnum;
 
 import java.time.LocalDate;
@@ -12,5 +12,5 @@ public class FreezeRecordDto {
 
     private FreezeRecordStatusEnum status;
 
-    private UserShortDto users;
+    private EmployeeShortDto employees;
 }

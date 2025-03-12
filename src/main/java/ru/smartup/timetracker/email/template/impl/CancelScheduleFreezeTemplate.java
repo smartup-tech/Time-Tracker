@@ -13,10 +13,10 @@ public class CancelScheduleFreezeTemplate extends BaseEmailTemplate {
 
     @Override
     public EmailXmlTemplate getTemplate(final Notice notice) {
-        return getUserRegistrationTemplateGenerator((NoticeFreeze) notice.getData());
+        return getEmployeeRegistrationTemplateGenerator((NoticeFreeze) notice.getData());
     }
 
-    private EmailXmlTemplate getUserRegistrationTemplateGenerator(final NoticeFreeze data) {
+    private EmailXmlTemplate getEmployeeRegistrationTemplateGenerator(final NoticeFreeze data) {
         return new EmailXmlTemplate(
                 CANCEL_FREEZE_TEMPLATE,
                 EmailConstant.SubjectName.CANCEL_FREEZE_SUBJECT,

@@ -1,20 +1,22 @@
 package ru.smartup.timetracker.service.freeze;
 
 import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 import ru.smartup.timetracker.entity.FreezeRecord;
 import ru.smartup.timetracker.entity.field.enumerated.FreezeRecordStatusEnum;
+import ru.smartup.timetracker.pojo.freeze.UnfreezeDateInterval;
 import ru.smartup.timetracker.service.TrackUnitService;
 import ru.smartup.timetracker.utils.FreezeDateUtils;
 
-import java.time.LocalDate;
 import java.time.ZonedDateTime;
 import java.util.List;
 
 @AllArgsConstructor
 @Service
+@Slf4j
 public class FreezeSchedulePlanner implements FreezeTrackUnitAlgorithm {
     private final CRUDFreezeService crudFreezeService;
     private final FreezeDateUtils freezeDateUtils;
@@ -54,7 +56,8 @@ public class FreezeSchedulePlanner implements FreezeTrackUnitAlgorithm {
     }
 
     public void scheduleFreeze(final FreezeRecord freezeRecord) {
-        final boolean scheduledFreezeEarlier = freezeScheduler.isScheduled() && freezeScheduler.scheduledDateEarlierThan(freezeRecord.getFreezeDate());
+        final boolean scheduledFreezeEarlier =
+                freezeScheduler.isScheduled() && freezeScheduler.scheduledDateEarlierThan(freezeRecord.getFreezeDate());
         if (scheduledFreezeEarlier) {
             return;
         }
@@ -100,27 +103,27 @@ public class FreezeSchedulePlanner implements FreezeTrackUnitAlgorithm {
     }
 
 
-    public void unfreeze(final FreezeRecord unfreezeRecord, final LocalDate prevFreezeRecord) {
-        if (prevFreezeRecord != null && unfreezeRecord.getFreezeDate().isBefore(prevFreezeRecord)) {
+    public void unfreeze(final FreezeRecord unfreezeRecord, final UnfreezeDateInterval unfreezeDateInterval) {
+        if (unfreezeDateInterval.getStartDate() != null && unfreezeRecord.getFreezeDate().isBefore(unfreezeDateInterval.getStartDate())) {
             return;
         }
 
         unfreezeRecord.setStatus(FreezeRecordStatusEnum.UN_FREEZE);
         crudFreezeService.save(unfreezeRecord);
 
-        final LocalDate unfreezeDate = prevFreezeRecord == null ? unfreezeRecord.getFreezeDate() : prevFreezeRecord;
+        unfreezeDateInterval.setEndDate(unfreezeRecord.getFreezeDate());
+        log.debug("Unfreeze date interval: {}", unfreezeDateInterval);
 
-        tryUnfreeze(unfreezeRecord, unfreezeDate);
+        tryUnfreeze(unfreezeRecord, unfreezeDateInterval);
     }
 
-    private void tryUnfreeze(final FreezeRecord unfreezeRecord, final LocalDate unfreezeDate) {
+    private void tryUnfreeze(final FreezeRecord unfreezeRecord, final UnfreezeDateInterval unfreezeDateInterval) {
         try {
-            final int updatedRecords = trackUnitService.unfreezeAllByDate(unfreezeDate);
+            final int updatedRecords = trackUnitService.unfreezeAllByDate(unfreezeDateInterval);
 
             unfreezeRecord.unfreeze(updatedRecords);
 
             freezeScheduler.unfreeze(unfreezeRecord, this);
-
         } catch (Exception e) {
             unfreezeRecord.interrupted(e.getMessage());
         } finally {

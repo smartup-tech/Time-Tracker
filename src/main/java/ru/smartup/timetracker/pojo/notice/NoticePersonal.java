@@ -6,5 +6,5 @@ import lombok.Getter;
 @AllArgsConstructor
 @Getter
 public class NoticePersonal {
-    private final String username;
+    private final String employeeName;
 }
