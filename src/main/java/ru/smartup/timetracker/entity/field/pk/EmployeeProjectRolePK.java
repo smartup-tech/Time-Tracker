@@ -1,0 +1,15 @@
+package ru.smartup.timetracker.entity.field.pk;
+
+import lombok.AllArgsConstructor;
+import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
+
+import java.io.Serializable;
+
+@NoArgsConstructor
+@AllArgsConstructor
+@EqualsAndHashCode
+public class EmployeeProjectRolePK implements Serializable {
+    private int employeeId;
+    private int projectId;
+}

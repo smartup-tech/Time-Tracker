@@ -7,8 +7,8 @@ import org.springframework.mail.javamail.JavaMailSender;
 import org.thymeleaf.spring5.SpringTemplateEngine;
 import ru.smartup.timetracker.email.template.EmailTemplateStrategy;
 import ru.smartup.timetracker.email.template.EmailXmlTemplate;
+import ru.smartup.timetracker.entity.Employee;
 import ru.smartup.timetracker.entity.Notice;
-import ru.smartup.timetracker.entity.User;
 import ru.smartup.timetracker.service.notification.notifierImpl.EmailNotifier;
 
 import javax.mail.Authenticator;
@@ -46,13 +46,13 @@ public class EmailNotifierTest {
         MimeMessage message = createMimeMessage();
         when(mailSender.createMimeMessage()).thenReturn(message);
 
-        User user = createUserObj();
+        Employee employee = createEmployeeObj();
 
         Notice notice = mock(Notice.class);
 
         when(emailTemplateStrategy.getTemplate(any(Notice.class))).thenReturn(createEmailTemplate());
 
-        emailNotifier.send(List.of(user), notice);
+        emailNotifier.send(List.of(employee), notice);
 
         verify(mailSender, timeout(5_000)).createMimeMessage();
         verify(mailSender, timeout(5_000)).send(message);
@@ -69,7 +69,7 @@ public class EmailNotifierTest {
 
         when(emailTemplateStrategy.getTemplate(any(Notice.class))).thenReturn(createEmailTemplate());
 
-        emailNotifier.send(List.of(createUserObj()), notice);
+        emailNotifier.send(List.of(createEmployeeObj()), notice);
 
         verify(mailSender, timeout(5_000)).createMimeMessage();
         verify(mailSender, timeout(5_000)).send(message);
@@ -89,13 +89,13 @@ public class EmailNotifierTest {
         };
     }
 
-    private User createUserObj() {
-        User user = new User();
-        user.setId(1);
-        user.setEmail("qwerty12345@smartup.ru");
-        user.setFirstName("fisrtname");
-        user.setPositionId(1);
-        return user;
+    private Employee createEmployeeObj() {
+        Employee employee = new Employee();
+        employee.setId(1);
+        employee.setEmail("qwerty12345@smartup.ru");
+        employee.setFirstName("fisrtname");
+        employee.setPositionId(1);
+        return employee;
     }
 
     private EmailXmlTemplate createEmailTemplate() {

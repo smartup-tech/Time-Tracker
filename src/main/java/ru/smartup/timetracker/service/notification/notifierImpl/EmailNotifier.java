@@ -8,8 +8,8 @@ import org.thymeleaf.context.Context;
 import org.thymeleaf.spring5.SpringTemplateEngine;
 import ru.smartup.timetracker.email.template.EmailTemplateStrategy;
 import ru.smartup.timetracker.email.template.EmailXmlTemplate;
+import ru.smartup.timetracker.entity.Employee;
 import ru.smartup.timetracker.entity.Notice;
-import ru.smartup.timetracker.entity.User;
 import ru.smartup.timetracker.service.notification.notifier.Notifier;
 
 import javax.mail.MessagingException;
@@ -27,10 +27,10 @@ public class EmailNotifier implements Notifier {
     private final EmailTemplateStrategy emailTemplate;
 
     @Override
-    public void send(final List<User> recipients, final Notice notice) {
+    public void send(final List<Employee> recipients, final Notice notice) {
         final List<String> recipientsEmail = recipients
                 .stream()
-                .map(User::getEmail)
+                .map(Employee::getEmail)
                 .collect(Collectors.toList());
 
         EmailXmlTemplate template = emailTemplate.getTemplate(notice);

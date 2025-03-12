@@ -2,17 +2,17 @@ package ru.smartup.timetracker.controller;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import ru.smartup.timetracker.core.SessionUserPrincipal;
+import ru.smartup.timetracker.core.SessionEmployeePrincipal;
 import ru.smartup.timetracker.core.WebConfig;
 import ru.smartup.timetracker.dto.project.response.TaskInProjectDto;
 import ru.smartup.timetracker.dto.task.request.TaskCreateDto;
 import ru.smartup.timetracker.dto.task.response.TaskDto;
 import ru.smartup.timetracker.entity.Project;
+import ru.smartup.timetracker.entity.field.enumerated.EmployeeRoleEnum;
 import ru.smartup.timetracker.entity.field.enumerated.ProjectRoleEnum;
 import ru.smartup.timetracker.entity.Task;
-import ru.smartup.timetracker.entity.UserProjectRole;
-import ru.smartup.timetracker.entity.UserRole;
-import ru.smartup.timetracker.entity.field.enumerated.UserRoleEnum;
+import ru.smartup.timetracker.entity.EmployeeProjectRole;
+import ru.smartup.timetracker.entity.EmployeeRole;
 import ru.smartup.timetracker.exception.ForbiddenException;
 import ru.smartup.timetracker.exception.NotProcessedTrackUnitsException;
 import ru.smartup.timetracker.exception.NotUniqueDataException;
@@ -30,8 +30,8 @@ import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.*;
 
 public class TaskRestControllerTest {
-    private static final int USER_ID = 1;
-    private static final String USER_EMAIL = "user_email";
+    private static final int EMPLOYEE_ID = 1;
+    private static final String EMPLOYEE_EMAIL = "employee_email";
     private static final int PROJECT_ID = 1;
     private static final long TASK_ID = 2;
     private static final String PROJECT_NAME = "project_name";
@@ -69,7 +69,7 @@ public class TaskRestControllerTest {
     public void getTask() {
         when(taskService.getTask(TASK_ID)).thenReturn(Optional.of(createTaskObj()));
 
-        TaskDto taskDto = taskRestController.getTask(createSessionUserPrincipal(UserRoleEnum.ROLE_USER,
+        TaskDto taskDto = taskRestController.getTask(createSessionEmployeePrincipal(EmployeeRoleEnum.ROLE_EMPLOYEE,
                 ProjectRoleEnum.EMPLOYEE), TASK_ID);
 
         assertEquals(TASK_ID, taskDto.getId());
@@ -84,7 +84,7 @@ public class TaskRestControllerTest {
         when(taskService.getTask(TASK_ID)).thenReturn(Optional.of(task));
 
         assertThrows(ForbiddenException.class, () -> taskRestController.getTask(
-                createSessionUserPrincipal(UserRoleEnum.ROLE_USER,
+                createSessionEmployeePrincipal(EmployeeRoleEnum.ROLE_EMPLOYEE,
                         ProjectRoleEnum.EMPLOYEE), TASK_ID));
     }
 
@@ -143,8 +143,8 @@ public class TaskRestControllerTest {
         when(projectService.getNotArchivedProject(PROJECT_ID)).thenReturn(Optional.of(createProject()));
         when(taskService.isNotUnique(PROJECT_ID, TASK_ID, TASK_NAME)).thenReturn(false);
 
-        taskRestController.updateTask(createSessionUserPrincipal(
-                UserRoleEnum.ROLE_USER, ProjectRoleEnum.MANAGER, PROJECT_ID), taskCreateDto, TASK_ID);
+        taskRestController.updateTask(createSessionEmployeePrincipal(
+                EmployeeRoleEnum.ROLE_EMPLOYEE, ProjectRoleEnum.MANAGER, PROJECT_ID), taskCreateDto, TASK_ID);
 
         verify(taskService).updateTask(task);
     }
@@ -177,7 +177,7 @@ public class TaskRestControllerTest {
         when(projectService.getNotArchivedProject(PROJECT_ID)).thenReturn(Optional.of(createProject()));
 
         assertThrows(ForbiddenException.class, () -> taskRestController.updateTask(
-                createSessionUserPrincipal(UserRoleEnum.ROLE_USER, ProjectRoleEnum.EMPLOYEE), taskCreateDto, TASK_ID));
+                createSessionEmployeePrincipal(EmployeeRoleEnum.ROLE_EMPLOYEE, ProjectRoleEnum.EMPLOYEE), taskCreateDto, TASK_ID));
     }
 
     @Test
@@ -192,8 +192,8 @@ public class TaskRestControllerTest {
         when(projectService.getNotArchivedProject(PROJECT_ID)).thenReturn(Optional.of(createProject()));
         when(taskService.isNotUnique(PROJECT_ID, TASK_ID, TASK_NAME)).thenReturn(true);
 
-        assertThrows(NotUniqueDataException.class, () -> taskRestController.updateTask(createSessionUserPrincipal(
-                UserRoleEnum.ROLE_USER, ProjectRoleEnum.MANAGER, PROJECT_ID), taskCreateDto, TASK_ID));
+        assertThrows(NotUniqueDataException.class, () -> taskRestController.updateTask(createSessionEmployeePrincipal(
+                EmployeeRoleEnum.ROLE_EMPLOYEE, ProjectRoleEnum.MANAGER, PROJECT_ID), taskCreateDto, TASK_ID));
     }
 
     @Test
@@ -203,8 +203,8 @@ public class TaskRestControllerTest {
 
         when(taskService.getNotArchivedTask(TASK_ID)).thenReturn(Optional.of(task));
 
-        taskRestController.archiveTask(createSessionUserPrincipal(
-                UserRoleEnum.ROLE_USER, ProjectRoleEnum.MANAGER, PROJECT_ID), TASK_ID);
+        taskRestController.archiveTask(createSessionEmployeePrincipal(
+                EmployeeRoleEnum.ROLE_EMPLOYEE, ProjectRoleEnum.MANAGER, PROJECT_ID), TASK_ID);
 
         verify(taskService).archiveTask(TASK_ID);
     }
@@ -225,8 +225,8 @@ public class TaskRestControllerTest {
         when(taskService.getNotArchivedTask(TASK_ID)).thenReturn(Optional.of(task));
 
         assertThrows(ForbiddenException.class, () ->
-                taskRestController.archiveTask(createSessionUserPrincipal(
-                        UserRoleEnum.ROLE_USER, ProjectRoleEnum.EMPLOYEE, PROJECT_ID), TASK_ID));
+                taskRestController.archiveTask(createSessionEmployeePrincipal(
+                        EmployeeRoleEnum.ROLE_EMPLOYEE, ProjectRoleEnum.EMPLOYEE, PROJECT_ID), TASK_ID));
     }
 
     @Test
@@ -238,8 +238,8 @@ public class TaskRestControllerTest {
         when(trackUnitService.hasNoneFinalTrackUnitForTask(TASK_ID)).thenReturn(true);
 
         assertThrows(NotProcessedTrackUnitsException.class, () ->
-                taskRestController.archiveTask(createSessionUserPrincipal(
-                        UserRoleEnum.ROLE_USER, ProjectRoleEnum.MANAGER, PROJECT_ID), TASK_ID));
+                taskRestController.archiveTask(createSessionEmployeePrincipal(
+                        EmployeeRoleEnum.ROLE_EMPLOYEE, ProjectRoleEnum.MANAGER, PROJECT_ID), TASK_ID));
     }
 
     private Project createProject() {
@@ -256,20 +256,20 @@ public class TaskRestControllerTest {
         return task;
     }
 
-    private SessionUserPrincipal createSessionUserPrincipal(UserRoleEnum role, ProjectRoleEnum projectRole) {
-        return createSessionUserPrincipal(role, projectRole, 0);
+    private SessionEmployeePrincipal createSessionEmployeePrincipal(EmployeeRoleEnum role, ProjectRoleEnum projectRole) {
+        return createSessionEmployeePrincipal(role, projectRole, 0);
     }
 
-    private SessionUserPrincipal createSessionUserPrincipal(UserRoleEnum role, ProjectRoleEnum projectRole, int projectId) {
-        SessionUserPrincipal sessionUserPrincipal = new SessionUserPrincipal(USER_ID, USER_EMAIL);
-        UserRole userRole = new UserRole();
-        userRole.setUserId(USER_ID);
-        userRole.setRoleId(role);
-        UserProjectRole userProjectRole = new UserProjectRole();
-        userProjectRole.setProjectId(projectId);
-        userProjectRole.setUserId(USER_ID);
-        userProjectRole.setProjectRoleId(projectRole);
-        sessionUserPrincipal.setAllRoles(List.of(userRole), List.of(userProjectRole));
-        return sessionUserPrincipal;
+    private SessionEmployeePrincipal createSessionEmployeePrincipal(EmployeeRoleEnum role, ProjectRoleEnum projectRole, int projectId) {
+        SessionEmployeePrincipal sessionEmployeePrincipal = new SessionEmployeePrincipal(EMPLOYEE_ID, EMPLOYEE_EMAIL);
+        EmployeeRole employeeRole = new EmployeeRole();
+        employeeRole.setEmployeeId(EMPLOYEE_ID);
+        employeeRole.setRoleId(role);
+        EmployeeProjectRole employeeProjectRole = new EmployeeProjectRole();
+        employeeProjectRole.setProjectId(projectId);
+        employeeProjectRole.setEmployeeId(EMPLOYEE_ID);
+        employeeProjectRole.setProjectRoleId(projectRole);
+        sessionEmployeePrincipal.setAllRoles(List.of(employeeRole), List.of(employeeProjectRole));
+        return sessionEmployeePrincipal;
     }
 }

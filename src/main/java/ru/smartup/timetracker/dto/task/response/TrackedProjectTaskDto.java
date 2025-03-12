@@ -8,7 +8,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class TrackedProjectTaskDto {
-    private int userId;
+    private int employeeId;
     private int projectId;
     private String projectName;
     private long taskId;

@@ -4,8 +4,8 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import ru.smartup.timetracker.entity.FreezeRecord;
 import ru.smartup.timetracker.entity.field.enumerated.FreezeRecordStatusEnum;
+import ru.smartup.timetracker.pojo.freeze.UnfreezeDateInterval;
 
-import java.sql.Date;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -20,14 +20,13 @@ public interface FreezeRecordRepository extends JpaRepository<FreezeRecord, Inte
 
     FreezeRecord findFirstByStatusOrderByFreezeDateAsc(final FreezeRecordStatusEnum freezeRecordStatusEnum);
 
-    @Query(value = "SELECT prev_day, next_day FROM " +
-            "(SELECT " +
-                "freeze_date, " +
-                "LAG(freeze_date) OVER (ORDER BY freeze_date) as prev_day, " +
-                "LEAD(freeze_date) OVER (ORDER BY freeze_date) as next_day " +
-            "FROM freeze_record) as boundary " +
-            "WHERE freeze_date = :date", nativeQuery = true)
-    List<Date> findBoundaryByFreezeDate(final LocalDate date);
+    /**
+     * Возвращает DTO с ближайшими датами слева и справа к дате последней блокировки
+     * @param date дата последней блокировки
+     * @return
+     */
+    @Query(nativeQuery = true)
+    UnfreezeDateInterval findBoundaryByFreezeDate(final LocalDate date);
 
     boolean existsByStatus(final FreezeRecordStatusEnum freezeRecordStatusEnum);
 }

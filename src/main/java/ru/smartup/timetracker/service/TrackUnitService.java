@@ -5,6 +5,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.smartup.timetracker.entity.TrackUnit;
 import ru.smartup.timetracker.pojo.*;
+import ru.smartup.timetracker.pojo.freeze.UnfreezeDateInterval;
 import ru.smartup.timetracker.repository.TrackUnitBatchRepository;
 import ru.smartup.timetracker.repository.TrackUnitRepository;
 
@@ -20,8 +21,8 @@ public class TrackUnitService {
     private final TrackUnitRepository trackUnitRepository;
     private final TrackUnitBatchRepository trackUnitBatchRepository;
 
-    public boolean hasNoneFinalTrackUnitForUser(int userId) {
-        return trackUnitRepository.hasNoneFinalTrackUnitForUser(userId);
+    public boolean hasNoneFinalTrackUnitForEmployee(int employeeId) {
+        return trackUnitRepository.hasNoneFinalTrackUnitForEmployee(employeeId);
     }
 
     public boolean hasNoneFinalTrackUnitForProject(int projectId) {
@@ -32,31 +33,31 @@ public class TrackUnitService {
         return trackUnitRepository.hasNoneFinalTrackUnitForTask(taskId);
     }
 
-    public List<TrackUnit> getByUserIdAndRange(int userId, LocalDate firstDayOfWeek, LocalDate lastDayOfWeek) {
-        return trackUnitRepository.findAllByUserIdAndRange(userId,
+    public List<TrackUnit> getByEmployeeIdAndRange(int employeeId, LocalDate firstDayOfWeek, LocalDate lastDayOfWeek) {
+        return trackUnitRepository.findAllByEmployeeIdAndRange(employeeId,
                 Date.valueOf(firstDayOfWeek), Date.valueOf(lastDayOfWeek));
     }
 
-    public List<TrackUnit> getByUserIdAndTaskIdAndRange(int userId, long taskId, LocalDate firstDayOfWeek,
-                                                        LocalDate lastDayOfWeek) {
-        return trackUnitRepository.findAllByUserIdAndTaskIdAndWorkDayBetween(userId, taskId,
+    public List<TrackUnit> getByEmployeeIdAndTaskIdAndRange(int employeeId, long taskId, LocalDate firstDayOfWeek,
+                                                            LocalDate lastDayOfWeek) {
+        return trackUnitRepository.findAllByEmployeeIdAndTaskIdAndWorkDayBetween(employeeId, taskId,
                 Date.valueOf(firstDayOfWeek), Date.valueOf(lastDayOfWeek));
     }
 
-    public List<TrackUnit> getByUserIdAndProjectIdsAndRange(int userId, Set<Integer> projectIds,
-                                                            LocalDate firstDayOfWeek, LocalDate lastDayOfWeek) {
-        return trackUnitRepository.findAllByUserIdAndProjectIdsAndRange(userId, projectIds,
+    public List<TrackUnit> getByEmployeeIdAndProjectIdsAndRange(int employeeId, Set<Integer> projectIds,
+                                                                LocalDate firstDayOfWeek, LocalDate lastDayOfWeek) {
+        return trackUnitRepository.findAllByEmployeeIdAndProjectIdsAndRange(employeeId, projectIds,
                 Date.valueOf(firstDayOfWeek), Date.valueOf(lastDayOfWeek));
     }
 
-    public List<TrackUnitUnsubmittedHours> getUnsubmittedHours(int userId) {
-        return trackUnitRepository.findUnsubmittedHours(userId).stream()
+    public List<TrackUnitUnsubmittedHours> getUnsubmittedHours(int employeeId) {
+        return trackUnitRepository.findUnsubmittedHours(employeeId).stream()
                 .map(weekHours -> new TrackUnitUnsubmittedHours(weekHours.getWeek(), weekHours.getHours()))
                 .collect(Collectors.toList());
     }
 
-    public List<TrackUnitUnsubmittedHours> getUnsubmittedHours(int userId, Set<Integer> projectIds) {
-        return trackUnitRepository.findUnsubmittedHours(userId, projectIds).stream()
+    public List<TrackUnitUnsubmittedHours> getUnsubmittedHours(int employeeId, Set<Integer> projectIds) {
+        return trackUnitRepository.findUnsubmittedHours(employeeId, projectIds).stream()
                 .map(weekHours -> new TrackUnitUnsubmittedHours(weekHours.getWeek(), weekHours.getHours()))
                 .collect(Collectors.toList());
     }
@@ -91,20 +92,21 @@ public class TrackUnitService {
         return trackUnitRepository.findAllSubmittedByWeekAndProjectId(week, projectId);
     }
 
-    public List<SubmittedWorkDaysForUsers> getSubmittedHoursForUser(final LocalDate startDate, final LocalDate endDate) {
-        return trackUnitRepository.findAllSubmittedHoursForUser(Date.valueOf(startDate), Date.valueOf(endDate));
+    public List<SubmittedWorkDaysForEmployees> getSubmittedHoursForEmployee(final LocalDate startDate, final LocalDate endDate) {
+        return trackUnitRepository.findAllSubmittedHoursForEmployee(Date.valueOf(startDate), Date.valueOf(endDate));
     }
 
-    public List<SubmittedWorkDaysForUsers> getSubmittedHoursForUser(final Set<Integer> projectIds, final LocalDate startDate, final LocalDate endDate) {
-        return trackUnitRepository.findAllSubmittedHoursForUser(projectIds, Date.valueOf(startDate), Date.valueOf(endDate));
+    public List<SubmittedWorkDaysForEmployees> getSubmittedHoursForEmployee(final Set<Integer> projectIds, final LocalDate startDate,
+                                                                            final LocalDate endDate) {
+        return trackUnitRepository.findAllSubmittedHoursForEmployee(projectIds, Date.valueOf(startDate), Date.valueOf(endDate));
     }
 
     public Set<Integer> getProjectIdsForTrackUnits(List<Long> trackUnitIds) {
         return trackUnitRepository.findProjectIdsForTrackUnits(trackUnitIds);
     }
 
-    public List<TrackUnitProjectNumberUsersHours> getSubmittedHoursAndNumberUsersForProjects() {
-        return trackUnitRepository.findSubmittedHoursAndNumberUsersForProjects();
+    public List<TrackUnitProjectNumberEmployeesHours> getSubmittedHoursAndNumberEmployeesForProjects() {
+        return trackUnitRepository.findSubmittedHoursAndNumberEmployeesForProjects();
     }
 
     public List<TrackUnitProjectTask> getTrackUnitsInfo(List<Long> trackUnitIds) {
@@ -132,18 +134,18 @@ public class TrackUnitService {
     }
 
     @Transactional
-    public int unfreezeAllByDate(LocalDate date) {
-        return trackUnitRepository.unfreezeAllByDate(Date.valueOf(date));
+    public int unfreezeAllByDate(UnfreezeDateInterval unfreezeDateInterval) {
+        return trackUnitRepository.unfreezeAllByDate(unfreezeDateInterval.getStartDate(), unfreezeDateInterval.getEndDate());
     }
 
     @Transactional
-    public void submit(int userId, List<Date> weeks) {
-        trackUnitRepository.submit(userId, weeks);
+    public void submit(int employeeId, List<Date> weeks) {
+        trackUnitRepository.submit(employeeId, weeks);
     }
 
     @Transactional
-    public void submit(int userId, Set<Integer> projectIds, List<Date> weeks) {
-        trackUnitRepository.submit(userId, projectIds, weeks);
+    public void submit(int employeeId, Set<Integer> projectIds, List<Date> weeks) {
+        trackUnitRepository.submit(employeeId, projectIds, weeks);
     }
 
     @Transactional

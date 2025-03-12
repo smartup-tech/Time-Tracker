@@ -41,35 +41,35 @@ public class NoticeService {
         }
     }
 
-    public List<Notice> getNoticesByUserId(int userId) {
-        return noticeRepository.findAllByUserIdOrderByCreatedDateDesc(userId);
+    public List<Notice> getNoticesByEmployeeId(int employeeId) {
+        return noticeRepository.findAllByEmployeeIdOrderByCreatedDateDescWithoutDeleted(employeeId);
     }
 
-    public Optional<Notice> getNoticeByIdAndUserId(long id, int userId) {
-        return noticeRepository.findByIdAndUserId(id, userId);
+    public Optional<Notice> getNoticeByIdAndEmployeeId(long id, int employeeId) {
+        return noticeRepository.findByIdAndEmployeeId(id, employeeId);
     }
 
-    public int getNumberUnreadNotices(int userId) {
-        return noticeRepository.countByUserIdAndReadFalse(userId);
-    }
-
-    @Transactional
-    public void readAllNoticesByUserId(int userId) {
-        noticeRepository.readAllByUserId(userId);
+    public int getNumberUnreadNotices(int employeeId) {
+        return noticeRepository.countByEmployeeIdAndReadFalse(employeeId);
     }
 
     @Transactional
-    public void readNoticesByIdsAndUserId(Set<Long> ids, int userId) {
-        noticeRepository.readByIdInAndUserId(ids, userId);
+    public void readAllNoticesByEmployeeId(int employeeId) {
+        noticeRepository.readAllByEmployeeId(employeeId);
     }
 
     @Transactional
-    public void deleteAllNoticesByUserId(int userId) {
-        noticeRepository.deleteAllByUserId(userId);
+    public void readNoticesByIdsAndEmployeeId(Set<Long> ids, int employeeId) {
+        noticeRepository.readByIdInAndEmployeeId(ids, employeeId);
     }
 
     @Transactional
-    public void deleteNoticesByIdsAndUserId(Set<Long> ids, int userId) {
-        noticeRepository.deleteByIdInAndUserId(ids, userId);
+    public void deleteAllNoticesByEmployeeId(int employeeId) {
+        noticeRepository.deleteAllByEmployeeId(employeeId);
+    }
+
+    @Transactional
+    public void deleteNoticesByIdsAndEmployeeId(Set<Long> ids, int employeeId) {
+        noticeRepository.setDeletedByIdInAndEmployeeId(ids, employeeId);
     }
 }

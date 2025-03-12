@@ -3,20 +3,20 @@ package ru.smartup.timetracker.controller;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.modelmapper.ModelMapper;
-import ru.smartup.timetracker.core.SessionUserPrincipal;
+import ru.smartup.timetracker.core.SessionEmployeePrincipal;
 import ru.smartup.timetracker.core.WebConfig;
 import ru.smartup.timetracker.dto.approval.request.SubmittedHoursApproveDto;
 import ru.smartup.timetracker.dto.approval.request.SubmittedHoursRejectDto;
 import ru.smartup.timetracker.dto.approval.response.SubmittedHoursByProjectsDto;
 import ru.smartup.timetracker.dto.approval.response.SubmittedHoursByWeekAndProjectDto;
 import ru.smartup.timetracker.dto.approval.response.SubmittedHoursDto;
+import ru.smartup.timetracker.entity.EmployeeProjectRole;
 import ru.smartup.timetracker.entity.Project;
+import ru.smartup.timetracker.entity.field.enumerated.EmployeeRoleEnum;
 import ru.smartup.timetracker.entity.field.enumerated.ProjectRoleEnum;
 import ru.smartup.timetracker.entity.TrackUnit;
 import ru.smartup.timetracker.entity.field.enumerated.TrackUnitStatusEnum;
-import ru.smartup.timetracker.entity.UserProjectRole;
-import ru.smartup.timetracker.entity.UserRole;
-import ru.smartup.timetracker.entity.field.enumerated.UserRoleEnum;
+import ru.smartup.timetracker.entity.EmployeeRole;
 import ru.smartup.timetracker.exception.ForbiddenException;
 import ru.smartup.timetracker.exception.ResourceNotFoundException;
 import ru.smartup.timetracker.pojo.SubmittedHours;
@@ -40,7 +40,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 public class ApprovalRestControllerTest {
-    private static final int USER_ID = 1;
+    private static final int EMPLOYEE_ID = 1;
     private static final int PROJECT_ID_1 = 1;
     private static final int PROJECT_ID_2 = 2;
     private static final int PROJECT_ID_3 = 3;
@@ -51,9 +51,9 @@ public class ApprovalRestControllerTest {
     private static final long TRACK_UNIT_ID_1 = 1;
     private static final long TRACK_UNIT_ID_2 = 2;
     private static final long TRACK_UNIT_ID_3 = 3;
-    private static final String USER_FIRST_NAME = "first name";
-    private static final String USER_LAST_NAME = "last name";
-    private static final String USER_EMAIL = "email";
+    private static final String EMPLOYEE_FIRST_NAME = "first name";
+    private static final String EMPLOYEE_LAST_NAME = "last name";
+    private static final String EMPLOYEE_EMAIL = "email";
     private static final String PROJECT_NAME_1 = "project name 1";
     private static final String PROJECT_NAME_2 = "project name 2";
     private static final String TASK_NAME = "task name";
@@ -79,7 +79,7 @@ public class ApprovalRestControllerTest {
         when(trackUnitService.getSubmittedHours()).thenReturn(submittedHours);
 
         List<SubmittedHoursDto> hours = approvalRestController.getSubmittedHours(
-                createSessionUserPrincipal(UserRoleEnum.ROLE_ADMIN));
+                createSessionEmployeePrincipal(EmployeeRoleEnum.ROLE_ADMIN));
 
         assertEquals(2, hours.size());
     }
@@ -90,15 +90,15 @@ public class ApprovalRestControllerTest {
                 new SubmittedHours(WEEK_2, WEEK_HOURS));
         when(trackUnitService.getSubmittedHours(Set.of(PROJECT_ID_1, PROJECT_ID_2))).thenReturn(submittedHours);
 
-        List<SubmittedHoursDto> hours = approvalRestController.getSubmittedHours(createSessionUserPrincipalForManager());
+        List<SubmittedHoursDto> hours = approvalRestController.getSubmittedHours(createSessionEmployeePrincipalForManager());
 
         assertEquals(2, hours.size());
     }
 
     @Test
-    public void getSubmittedHours_whenUser_shouldReturnException() {
+    public void getSubmittedHours_whenEmployee_shouldReturnException() {
         assertThrows(ForbiddenException.class, () -> approvalRestController.getSubmittedHours(
-                createSessionUserPrincipal(UserRoleEnum.ROLE_USER)));
+                createSessionEmployeePrincipal(EmployeeRoleEnum.ROLE_EMPLOYEE)));
         verify(trackUnitService, never()).getSubmittedHours(anySet());
     }
 
@@ -111,7 +111,7 @@ public class ApprovalRestControllerTest {
         when(trackUnitService.getSubmittedHoursByProjects(Date.valueOf(WEEK_1))).thenReturn(submittedHoursByProjects);
 
         List<SubmittedHoursByProjectsDto> hours = approvalRestController.getSubmittedHoursByProjects(
-                createSessionUserPrincipal(UserRoleEnum.ROLE_ADMIN), WEEK_1);
+                createSessionEmployeePrincipal(EmployeeRoleEnum.ROLE_ADMIN), WEEK_1);
 
         assertEquals(2, hours.size());
     }
@@ -126,15 +126,15 @@ public class ApprovalRestControllerTest {
                 .thenReturn(submittedHoursByProjects);
 
         List<SubmittedHoursByProjectsDto> hours = approvalRestController.getSubmittedHoursByProjects(
-                createSessionUserPrincipalForManager(), WEEK_1);
+                createSessionEmployeePrincipalForManager(), WEEK_1);
 
         assertEquals(2, hours.size());
     }
 
     @Test
-    public void getSubmittedHoursByProjects_whenUser_shouldReturnException() {
+    public void getSubmittedHoursByProjects_whenEmployee_shouldReturnException() {
         assertThrows(ForbiddenException.class, () -> approvalRestController.getSubmittedHoursByProjects(
-                createSessionUserPrincipal(UserRoleEnum.ROLE_USER), WEEK_1));
+                createSessionEmployeePrincipal(EmployeeRoleEnum.ROLE_EMPLOYEE), WEEK_1));
         verify(trackUnitService, never()).getSubmittedHoursByProjects(eq(Date.valueOf(WEEK_1)), anySet());
     }
 
@@ -165,7 +165,7 @@ public class ApprovalRestControllerTest {
         SubmittedHoursApproveDto submittedHoursApproveDto = new SubmittedHoursApproveDto();
         submittedHoursApproveDto.setTrackUnitIds(trackUnitIds);
 
-        approvalRestController.approveHours(createSessionUserPrincipal(UserRoleEnum.ROLE_ADMIN), submittedHoursApproveDto);
+        approvalRestController.approveHours(createSessionEmployeePrincipal(EmployeeRoleEnum.ROLE_ADMIN), submittedHoursApproveDto);
 
         verify(trackUnitService).approve(trackUnitIds);
     }
@@ -177,7 +177,7 @@ public class ApprovalRestControllerTest {
         submittedHoursApproveDto.setTrackUnitIds(trackUnitIds);
         when(trackUnitService.getProjectIdsForTrackUnits(trackUnitIds)).thenReturn(Set.of(PROJECT_ID_1));
 
-        approvalRestController.approveHours(createSessionUserPrincipalForManager(), submittedHoursApproveDto);
+        approvalRestController.approveHours(createSessionEmployeePrincipalForManager(), submittedHoursApproveDto);
 
         verify(trackUnitService).approve(trackUnitIds);
     }
@@ -189,7 +189,7 @@ public class ApprovalRestControllerTest {
         submittedHoursApproveDto.setTrackUnitIds(trackUnitIds);
         when(trackUnitService.getProjectIdsForTrackUnits(trackUnitIds)).thenReturn(Set.of());
 
-        approvalRestController.approveHours(createSessionUserPrincipalForManager(), submittedHoursApproveDto);
+        approvalRestController.approveHours(createSessionEmployeePrincipalForManager(), submittedHoursApproveDto);
 
         verify(trackUnitService, never()).approve(trackUnitIds);
     }
@@ -202,7 +202,7 @@ public class ApprovalRestControllerTest {
         when(trackUnitService.getProjectIdsForTrackUnits(trackUnitIds)).thenReturn(Set.of(PROJECT_ID_3));
 
         assertThrows(ForbiddenException.class, () ->
-                approvalRestController.approveHours(createSessionUserPrincipalForManager(), submittedHoursApproveDto));
+                approvalRestController.approveHours(createSessionEmployeePrincipalForManager(), submittedHoursApproveDto));
         verify(trackUnitService, never()).approve(trackUnitIds);
     }
 
@@ -213,7 +213,7 @@ public class ApprovalRestControllerTest {
         submittedHoursRejectDto.setTrackUnitIds(trackUnitIds);
         submittedHoursRejectDto.setRejectReason(REJECT_REASON);
 
-        approvalRestController.rejectHours(createSessionUserPrincipal(UserRoleEnum.ROLE_ADMIN), submittedHoursRejectDto);
+        approvalRestController.rejectHours(createSessionEmployeePrincipal(EmployeeRoleEnum.ROLE_ADMIN), submittedHoursRejectDto);
 
         verify(trackUnitService).reject(trackUnitIds, REJECT_REASON);
     }
@@ -226,7 +226,7 @@ public class ApprovalRestControllerTest {
         submittedHoursRejectDto.setRejectReason(REJECT_REASON);
         when(trackUnitService.getProjectIdsForTrackUnits(trackUnitIds)).thenReturn(Set.of(PROJECT_ID_1));
 
-        approvalRestController.rejectHours(createSessionUserPrincipalForManager(), submittedHoursRejectDto);
+        approvalRestController.rejectHours(createSessionEmployeePrincipalForManager(), submittedHoursRejectDto);
 
         verify(trackUnitService).reject(trackUnitIds, REJECT_REASON);
     }
@@ -239,7 +239,7 @@ public class ApprovalRestControllerTest {
         submittedHoursRejectDto.setRejectReason(REJECT_REASON);
         when(trackUnitService.getProjectIdsForTrackUnits(trackUnitIds)).thenReturn(Set.of());
 
-        approvalRestController.rejectHours(createSessionUserPrincipalForManager(), submittedHoursRejectDto);
+        approvalRestController.rejectHours(createSessionEmployeePrincipalForManager(), submittedHoursRejectDto);
 
         verify(trackUnitService, never()).reject(trackUnitIds, REJECT_REASON);
     }
@@ -253,38 +253,38 @@ public class ApprovalRestControllerTest {
         when(trackUnitService.getProjectIdsForTrackUnits(trackUnitIds)).thenReturn(Set.of(PROJECT_ID_3));
 
         assertThrows(ForbiddenException.class, () ->
-                approvalRestController.rejectHours(createSessionUserPrincipalForManager(), submittedHoursRejectDto));
+                approvalRestController.rejectHours(createSessionEmployeePrincipalForManager(), submittedHoursRejectDto));
         verify(trackUnitService, never()).reject(trackUnitIds, REJECT_REASON);
     }
 
-    private SessionUserPrincipal createSessionUserPrincipal(UserRoleEnum role) {
-        SessionUserPrincipal sessionUserPrincipal = new SessionUserPrincipal(USER_ID, USER_EMAIL);
-        UserRole userRole = new UserRole();
-        userRole.setUserId(USER_ID);
-        userRole.setRoleId(role);
-        sessionUserPrincipal.setAllRoles(List.of(userRole), List.of());
-        return sessionUserPrincipal;
+    private SessionEmployeePrincipal createSessionEmployeePrincipal(EmployeeRoleEnum role) {
+        SessionEmployeePrincipal sessionEmployeePrincipal = new SessionEmployeePrincipal(EMPLOYEE_ID, EMPLOYEE_EMAIL);
+        EmployeeRole employeeRole = new EmployeeRole();
+        employeeRole.setEmployeeId(EMPLOYEE_ID);
+        employeeRole.setRoleId(role);
+        sessionEmployeePrincipal.setAllRoles(List.of(employeeRole), List.of());
+        return sessionEmployeePrincipal;
     }
 
-    private SessionUserPrincipal createSessionUserPrincipalForManager() {
-        SessionUserPrincipal sessionUserPrincipal = new SessionUserPrincipal(USER_ID, USER_EMAIL);
-        UserRole userRole = new UserRole();
-        userRole.setUserId(USER_ID);
-        userRole.setRoleId(UserRoleEnum.ROLE_USER);
-        UserProjectRole userProjectRole1 = new UserProjectRole();
-        userProjectRole1.setProjectId(PROJECT_ID_1);
-        userProjectRole1.setUserId(USER_ID);
-        userProjectRole1.setProjectRoleId(ProjectRoleEnum.MANAGER);
-        UserProjectRole userProjectRole2 = new UserProjectRole();
-        userProjectRole2.setProjectId(PROJECT_ID_2);
-        userProjectRole2.setUserId(USER_ID);
-        userProjectRole2.setProjectRoleId(ProjectRoleEnum.MANAGER);
-        sessionUserPrincipal.setAllRoles(List.of(userRole), List.of(userProjectRole1, userProjectRole2));
-        return sessionUserPrincipal;
+    private SessionEmployeePrincipal createSessionEmployeePrincipalForManager() {
+        SessionEmployeePrincipal sessionEmployeePrincipal = new SessionEmployeePrincipal(EMPLOYEE_ID, EMPLOYEE_EMAIL);
+        EmployeeRole employeeRole = new EmployeeRole();
+        employeeRole.setEmployeeId(EMPLOYEE_ID);
+        employeeRole.setRoleId(EmployeeRoleEnum.ROLE_EMPLOYEE);
+        EmployeeProjectRole employeeProjectRole1 = new EmployeeProjectRole();
+        employeeProjectRole1.setProjectId(PROJECT_ID_1);
+        employeeProjectRole1.setEmployeeId(EMPLOYEE_ID);
+        employeeProjectRole1.setProjectRoleId(ProjectRoleEnum.MANAGER);
+        EmployeeProjectRole employeeProjectRole2 = new EmployeeProjectRole();
+        employeeProjectRole2.setProjectId(PROJECT_ID_2);
+        employeeProjectRole2.setEmployeeId(EMPLOYEE_ID);
+        employeeProjectRole2.setProjectRoleId(ProjectRoleEnum.MANAGER);
+        sessionEmployeePrincipal.setAllRoles(List.of(employeeRole), List.of(employeeProjectRole1, employeeProjectRole2));
+        return sessionEmployeePrincipal;
     }
 
     private List<TrackUnit> createListOfTrackUnits() {
-        TrackUnit trackUnit = new TrackUnit(TRACK_UNIT_ID_1, USER_ID, USER_FIRST_NAME, USER_LAST_NAME, TASK_ID, TASK_NAME,
+        TrackUnit trackUnit = new TrackUnit(TRACK_UNIT_ID_1, EMPLOYEE_ID, EMPLOYEE_FIRST_NAME, EMPLOYEE_LAST_NAME, TASK_ID, TASK_NAME,
                 java.util.Date.from(Instant.now()), DAY_HOURS, TrackUnitStatusEnum.SUBMITTED, true, null);
         return List.of(trackUnit);
     }

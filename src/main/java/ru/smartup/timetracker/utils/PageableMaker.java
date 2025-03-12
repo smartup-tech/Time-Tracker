@@ -5,9 +5,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Component;
 import ru.smartup.timetracker.dto.PageableRequestParamDto;
-import ru.smartup.timetracker.entity.field.sort.ProjectSortFieldEnum;
 import ru.smartup.timetracker.entity.field.sort.SortField;
-import ru.smartup.timetracker.entity.field.sort.UserSortFieldEnum;
 
 @Component
 public class PageableMaker {

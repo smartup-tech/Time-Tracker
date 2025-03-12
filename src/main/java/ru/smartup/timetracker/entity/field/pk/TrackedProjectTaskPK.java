@@ -10,6 +10,6 @@ import java.io.Serializable;
 @AllArgsConstructor
 @EqualsAndHashCode
 public class TrackedProjectTaskPK implements Serializable {
-    private int userId;
+    private int employeeId;
     private long taskId;
 }

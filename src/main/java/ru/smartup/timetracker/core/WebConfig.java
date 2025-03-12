@@ -27,7 +27,7 @@ import ru.smartup.timetracker.dto.ErrorCode;
 import ru.smartup.timetracker.dto.ResultDto;
 import ru.smartup.timetracker.entity.field.sort.PositionSortFieldEnum;
 import ru.smartup.timetracker.entity.field.sort.ProjectSortFieldEnum;
-import ru.smartup.timetracker.entity.field.sort.UserSortFieldEnum;
+import ru.smartup.timetracker.entity.field.sort.EmployeeSortFieldEnum;
 
 import javax.servlet.http.HttpServletResponse;
 import java.util.Arrays;
@@ -72,7 +72,7 @@ public class WebConfig implements WebMvcConfigurer {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity httpSecurity,
                                            DBAuthenticationProvider dbAuthenticationProvider,
-                                           SessionUserPrincipalInitFilter sessionUserPrincipalInitFilter,
+                                           SessionEmployeePrincipalInitFilter sessionEmployeePrincipalInitFilter,
                                            UnauthorizedFilter unauthorizedFilter,
                                            SessionRegistry sessionRegistry,
                                            ObjectMapper objectMapper) throws Exception {
@@ -105,7 +105,7 @@ public class WebConfig implements WebMvcConfigurer {
                 .csrf().ignoringAntMatchers(API_PATTERN);
         httpSecurity
                 .addFilterAfter(unauthorizedFilter, UsernamePasswordAuthenticationFilter.class)
-                .addFilterAfter(sessionUserPrincipalInitFilter, UnauthorizedFilter.class);
+                .addFilterAfter(sessionEmployeePrincipalInitFilter, UnauthorizedFilter.class);
         return httpSecurity.build();
     }
 
@@ -130,7 +130,7 @@ public class WebConfig implements WebMvcConfigurer {
 
     @Override
     public void addFormatters(FormatterRegistry registry) {
-        registry.addConverter(new StringToEnum<>(UserSortFieldEnum.class));
+        registry.addConverter(new StringToEnum<>(EmployeeSortFieldEnum.class));
         registry.addConverter(new StringToEnum<>(PositionSortFieldEnum.class));
         registry.addConverter(new StringToEnum<>(ProjectSortFieldEnum.class));
     }

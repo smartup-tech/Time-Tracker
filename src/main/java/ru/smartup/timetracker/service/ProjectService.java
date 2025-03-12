@@ -15,7 +15,7 @@ import ru.smartup.timetracker.dto.QueryArchiveParamRequestDto;
 import ru.smartup.timetracker.dto.project.response.ProjectShortDto;
 import ru.smartup.timetracker.entity.Project;
 import ru.smartup.timetracker.entity.field.sort.ProjectSortFieldEnum;
-import ru.smartup.timetracker.pojo.ProjectOfUser;
+import ru.smartup.timetracker.pojo.ProjectOfEmployee;
 import ru.smartup.timetracker.repository.ProjectRepository;
 import ru.smartup.timetracker.repository.TaskRepository;
 import ru.smartup.timetracker.repository.criteria.ProjectFilterBuilder;
@@ -113,13 +113,13 @@ public class ProjectService {
         return projectRepository.findAllByIdIn(projectIds);
     }
 
-    public List<Project> getNotArchivedProjectsOfUser(int userId) {
-        return projectRepository.findAllNotArchivedProjectsOfUser(userId);
+    public List<Project> getNotArchivedProjectsOfEmployee(int employeeId) {
+        return projectRepository.findAllNotArchivedProjectsOfEmployee(employeeId);
     }
 
-    public List<ProjectOfUser> getNotArchivedProjectsOfUserWithRole(int userId) {
-        return projectRepository.findAllNotArchivedProjectsOfUserWithRole(userId).stream()
-                .map(projectWithRole -> new ProjectOfUser(
+    public List<ProjectOfEmployee> getNotArchivedProjectsOfEmployeeWithRole(int employeeId) {
+        return projectRepository.findAllNotArchivedProjectsOfEmployeeWithRole(employeeId).stream()
+                .map(projectWithRole -> new ProjectOfEmployee(
                         projectWithRole.getId(),
                         projectWithRole.getName(),
                         projectWithRole.isArchived(),

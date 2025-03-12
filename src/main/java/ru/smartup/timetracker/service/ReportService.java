@@ -18,11 +18,11 @@ public class ReportService {
         return reportRepository.getReportHoursForProjects(projectIds, startDate, endDate);
     }
 
-    public List<ReportHours> getReportHoursForUsers(Set<Integer> projectIds, Date startDate, Date endDate) {
-        return reportRepository.getReportHoursForUsers(projectIds, startDate, endDate);
+    public List<ReportHours> getReportHoursForEmployees(Set<Integer> projectIds, Date startDate, Date endDate) {
+        return reportRepository.getReportHoursForEmployees(projectIds, startDate, endDate);
     }
 
-    public List<ReportHours> getReportHoursForCurrentUser(int userId, Date startDate, Date endDate) {
-        return reportRepository.getReportHoursForCurrentUser(userId, startDate, endDate);
+    public List<ReportHours> getReportHoursForCurrentEmployee(int employeeId, Date startDate, Date endDate) {
+        return reportRepository.getReportHoursForCurrentEmployee(employeeId, startDate, endDate);
     }
 }

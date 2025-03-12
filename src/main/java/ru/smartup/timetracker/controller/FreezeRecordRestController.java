@@ -4,8 +4,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.WebDataBinder;
 import org.springframework.web.bind.annotation.*;
-import ru.smartup.timetracker.core.CurrentSessionUserPrincipal;
-import ru.smartup.timetracker.core.SessionUserPrincipal;
+import ru.smartup.timetracker.core.CurrentSessionEmployeePrincipal;
+import ru.smartup.timetracker.core.SessionEmployeePrincipal;
 import ru.smartup.timetracker.dto.freeze.request.FreezeDateDtoRequest;
 import ru.smartup.timetracker.dto.freeze.response.FreezeRecordDto;
 import ru.smartup.timetracker.exception.LockedException;
@@ -40,16 +40,16 @@ public class FreezeRecordRestController {
     }
 
     @PutMapping
-    public List<FreezeRecordDto> updateFreezeData(final @CurrentSessionUserPrincipal SessionUserPrincipal currentSessionUserPrincipal,
+    public List<FreezeRecordDto> updateFreezeData(final @CurrentSessionEmployeePrincipal SessionEmployeePrincipal currentSessionEmployeePrincipal,
                                                   final @RequestBody FreezeDateDtoRequest dates) {
-        if (freezeService.createOrUpdateTask(dates, currentSessionUserPrincipal.getId())) {
+        if (freezeService.createOrUpdateTask(dates, currentSessionEmployeePrincipal.getId())) {
             return crudFreezeService.getFreezeRecordsDto();
         }
         throw new LockedException("Another operation already in progress. Please try again later.");
     }
 
     @PutMapping("/unfreeze")
-    public FreezeRecordDto unfreezeLast(final @CurrentSessionUserPrincipal SessionUserPrincipal userPrincipal) {
+    public FreezeRecordDto unfreezeLast(final @CurrentSessionEmployeePrincipal SessionEmployeePrincipal employeePrincipal) {
         if(freezeService.unfreezeLastRecord()) {
             return crudFreezeService.getUnfreezeRecordDto();
         }

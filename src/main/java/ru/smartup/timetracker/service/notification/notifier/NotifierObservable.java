@@ -4,7 +4,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import ru.smartup.timetracker.core.notification.NotifierNames;
 import ru.smartup.timetracker.entity.Notice;
-import ru.smartup.timetracker.entity.User;
+import ru.smartup.timetracker.entity.Employee;
 
 import java.util.*;
 import java.util.concurrent.Callable;
@@ -25,11 +25,11 @@ public class NotifierObservable {
         this.executorService = Executors.newFixedThreadPool(THREAD_PULL_SIZE);
     }
 
-    public void notifyAllChannels(final List<User> recipients, final Notice message) {
+    public void notifyAllChannels(final List<Employee> recipients, final Notice message) {
         invokeNotify(recipients, message, appNotifiers.values());
     }
 
-    private void invokeNotify(final List<User> recipients, final Notice message, final Collection<Notifier> notifiers) {
+    private void invokeNotify(final List<Employee> recipients, final Notice message, final Collection<Notifier> notifiers) {
         try {
             executorService.invokeAll(notifiersSending(recipients, message, notifiers));
         } catch (InterruptedException e) {
@@ -38,7 +38,7 @@ public class NotifierObservable {
         }
     }
 
-    private List<Callable<Void>> notifiersSending(final List<User> recipients, final Notice message, final Collection<Notifier> notifiers) {
+    private List<Callable<Void>> notifiersSending(final List<Employee> recipients, final Notice message, final Collection<Notifier> notifiers) {
         return notifiers.stream()
                 .map(subscriber ->
                         (Callable<Void>) () -> {
@@ -49,15 +49,15 @@ public class NotifierObservable {
                 .collect(Collectors.toList());
     }
 
-    public void notifyEmailChannel(final List<User> recipients, final Notice notice) {
+    public void notifyEmailChannel(final List<Employee> recipients, final Notice notice) {
         notifySpecificChannels(recipients, notice, NotifierNames.EMAIL_NOTIFIER);
     }
 
-    public void notifyAppChannel(final List<User> recipients, final Notice notice) {
+    public void notifyAppChannel(final List<Employee> recipients, final Notice notice) {
         notifySpecificChannels(recipients, notice, NotifierNames.DATABASE_NOTIFIER);
     }
 
-    public void notifySpecificChannels(final List<User> recipients, final Notice message, final String ...notifierNames) {
+    public void notifySpecificChannels(final List<Employee> recipients, final Notice message, final String ...notifierNames) {
         final List<Notifier> filtered = filterNotifierByName(notifierNames);
 
         invokeNotify(recipients, message, filtered);

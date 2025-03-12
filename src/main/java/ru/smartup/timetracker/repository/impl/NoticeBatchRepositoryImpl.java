@@ -23,11 +23,11 @@ public class NoticeBatchRepositoryImpl implements NoticeBatchRepository {
 
     @Override
     public void createNotices(List<Notice> notices) {
-        String query = "INSERT INTO notice (type, user_id, text, data, created_by) VALUES (?, ?, ?, to_jsonb(?::jsonb), ?)";
+        String query = "INSERT INTO notice (type, employee_id, text, data, created_by) VALUES (?, ?, ?, to_jsonb(?::jsonb), ?)";
         jdbcTemplate.batchUpdate(query, notices, BATCH_SIZE,
                 (PreparedStatement ps, Notice notice) -> {
                     ps.setString(1, notice.getType().name());
-                    ps.setInt(2, notice.getUserId());
+                    ps.setInt(2, notice.getEmployeeId());
                     ps.setString(3, notice.getText());
                     try {
                         ps.setString(4, objectMapper.writeValueAsString(notice.getData()));

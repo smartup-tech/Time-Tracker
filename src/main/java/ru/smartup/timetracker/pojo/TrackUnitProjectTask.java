@@ -12,7 +12,7 @@ import java.util.Date;
 @NoArgsConstructor
 @AllArgsConstructor
 public class TrackUnitProjectTask {
-    private int userId;
+    private int employeeId;
 
     private long trackUnitId;
 

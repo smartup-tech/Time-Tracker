@@ -1,8 +1,8 @@
 package ru.smartup.timetracker.dto.profile.response;
 
 import lombok.Data;
+import ru.smartup.timetracker.entity.field.enumerated.EmployeeRoleEnum;
 import ru.smartup.timetracker.entity.field.enumerated.ProjectRoleEnum;
-import ru.smartup.timetracker.entity.field.enumerated.UserRoleEnum;
 
 import java.util.Set;
 
@@ -18,7 +18,7 @@ public class ProfileDto {
 
     private String email;
 
-    private Set<UserRoleEnum> roles;
+    private Set<EmployeeRoleEnum> roles;
 
     private Set<ProjectRoleEnum> projectRoles;
 }

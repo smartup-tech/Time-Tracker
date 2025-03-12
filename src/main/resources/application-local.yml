@@ -2,6 +2,9 @@
 spring:
   jpa:
     show-sql: true
+  mattermost:
+    webhook-url: "${MM_NOTIFICATION_URL:https://example.com/webhook}"
+    time-tracker-url: "${TIME_TRACKER_URL:https://time-tracker.ru/}"
   mail:
     protocol: smtp
     host: localhost

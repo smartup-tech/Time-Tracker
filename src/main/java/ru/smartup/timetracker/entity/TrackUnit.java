@@ -43,8 +43,8 @@ public class TrackUnit {
     @Column(name = "task_id")
     private long taskId;
 
-    @Column(name = "user_id")
-    private int userId;
+    @Column(name = "employee_id")
+    private int employeeId;
 
     @Column(name = "created_date", insertable = false, updatable = false)
     private Timestamp createdDate;
@@ -56,7 +56,7 @@ public class TrackUnit {
     private boolean frozen;
 
     @Transient
-    private User user;
+    private Employee employee;
 
     @Transient
     private Project project;
@@ -64,10 +64,10 @@ public class TrackUnit {
     @Transient
     private Task task;
 
-    public TrackUnit(long id, int userId, String userFirstName, String userLastName, long taskId, String taskName,
+    public TrackUnit(long id, int employeeId, String employeeFirstName, String employeeLastName, long taskId, String taskName,
                      java.util.Date workDay, float hours, TrackUnitStatusEnum status, boolean billable, String comment) {
         this.id = id;
-        this.user = new User(userId, userFirstName, userLastName);
+        this.employee = new Employee(employeeId, employeeFirstName, employeeLastName);
         this.task = new Task(taskId, taskName);
         this.workDay = new Date(workDay.getTime());
         this.hours = hours;

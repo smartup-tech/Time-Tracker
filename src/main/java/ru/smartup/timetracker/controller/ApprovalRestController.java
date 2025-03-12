@@ -5,8 +5,8 @@ import org.modelmapper.ModelMapper;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.WebDataBinder;
 import org.springframework.web.bind.annotation.*;
-import ru.smartup.timetracker.core.CurrentSessionUserPrincipal;
-import ru.smartup.timetracker.core.SessionUserPrincipal;
+import ru.smartup.timetracker.core.CurrentSessionEmployeePrincipal;
+import ru.smartup.timetracker.core.SessionEmployeePrincipal;
 import ru.smartup.timetracker.dto.EntityDtoConverter;
 import ru.smartup.timetracker.dto.approval.request.SubmittedHoursApproveDto;
 import ru.smartup.timetracker.dto.approval.request.SubmittedHoursRejectDto;
@@ -19,12 +19,12 @@ import ru.smartup.timetracker.entity.Project;
 import ru.smartup.timetracker.entity.field.enumerated.ProjectRoleEnum;
 import ru.smartup.timetracker.entity.Task;
 import ru.smartup.timetracker.entity.TrackUnit;
-import ru.smartup.timetracker.entity.User;
+import ru.smartup.timetracker.entity.Employee;
 import ru.smartup.timetracker.exception.ForbiddenException;
 import ru.smartup.timetracker.exception.ResourceNotFoundException;
 import ru.smartup.timetracker.pojo.SubmittedHours;
 import ru.smartup.timetracker.pojo.SubmittedHoursByProjects;
-import ru.smartup.timetracker.pojo.SubmittedWorkDaysForUsers;
+import ru.smartup.timetracker.pojo.SubmittedWorkDaysForEmployees;
 import ru.smartup.timetracker.service.ProductionCalendarService;
 import ru.smartup.timetracker.service.ProjectService;
 import ru.smartup.timetracker.service.TrackUnitService;
@@ -58,16 +58,16 @@ public class ApprovalRestController {
     @PreAuthorize("getPrincipal().isManager() or getPrincipal().isAdmin()")
     @GetMapping("/submitted")
     public List<SubmittedHoursDto> getSubmittedHours(
-            @CurrentSessionUserPrincipal SessionUserPrincipal currentSessionUserPrincipal
+            @CurrentSessionEmployeePrincipal SessionEmployeePrincipal currentSessionEmployeePrincipal
     ) {
         List<SubmittedHours> hours;
-        if (currentSessionUserPrincipal.isAdmin()) {
+        if (currentSessionEmployeePrincipal.isAdmin()) {
             hours = trackUnitService.getSubmittedHours();
         } else {
-            Set<Integer> projectIds = currentSessionUserPrincipal.getProjectIdsByProjectRole(ProjectRoleEnum.MANAGER);
+            Set<Integer> projectIds = currentSessionEmployeePrincipal.getProjectIdsByProjectRole(ProjectRoleEnum.MANAGER);
             if (projectIds.isEmpty()) {
-                throw new ForbiddenException("User has not admin or manager role in any project; userId = "
-                        + currentSessionUserPrincipal.getId() + ".");
+                throw new ForbiddenException("Employee has not admin or manager role in any project; employeeId = "
+                        + currentSessionEmployeePrincipal.getId() + ".");
             } else {
                 hours = trackUnitService.getSubmittedHours(projectIds);
             }
@@ -80,18 +80,18 @@ public class ApprovalRestController {
     @PreAuthorize("getPrincipal().isManager() or getPrincipal().isAdmin()")
     @GetMapping("/submittedByProjects")
     public List<SubmittedHoursByProjectsDto> getSubmittedHoursByProjects(
-            @CurrentSessionUserPrincipal SessionUserPrincipal currentSessionUserPrincipal,
+            @CurrentSessionEmployeePrincipal SessionEmployeePrincipal currentSessionEmployeePrincipal,
             @RequestParam(name = "dateWeek", defaultValue = "now()") LocalDate dateOfWeek
     ) {
         LocalDate firstDayOfWeek = dateOfWeek.with(DayOfWeek.MONDAY);
         List<SubmittedHoursByProjects> hours;
-        if (currentSessionUserPrincipal.isAdmin()) {
+        if (currentSessionEmployeePrincipal.isAdmin()) {
             hours = trackUnitService.getSubmittedHoursByProjects(Date.valueOf(firstDayOfWeek));
         } else {
-            Set<Integer> projectIds = currentSessionUserPrincipal.getProjectIdsByProjectRole(ProjectRoleEnum.MANAGER);
+            Set<Integer> projectIds = currentSessionEmployeePrincipal.getProjectIdsByProjectRole(ProjectRoleEnum.MANAGER);
             if (projectIds.isEmpty()) {
-                throw new ForbiddenException("User has not admin or manager role in any project; userId = "
-                        + currentSessionUserPrincipal.getId() + ".");
+                throw new ForbiddenException("Employee has not admin or manager role in any project; employeeId = "
+                        + currentSessionEmployeePrincipal.getId() + ".");
             } else {
                 hours = trackUnitService.getSubmittedHoursByProjects(Date.valueOf(firstDayOfWeek), projectIds);
             }
@@ -106,19 +106,19 @@ public class ApprovalRestController {
     public SubmittedWorkDaysTableDto getSubmittedWorkDay(
             @RequestParam(value = "startDate", required = false) LocalDate startDate,
             final @RequestParam(value = "endDate", defaultValue = "now()") LocalDate endDate,
-            final @CurrentSessionUserPrincipal SessionUserPrincipal currentSessionUserPrincipal
+            final @CurrentSessionEmployeePrincipal SessionEmployeePrincipal currentSessionEmployeePrincipal
     ) {
-        List<SubmittedWorkDaysForUsers> workDaysStatistics;
+        List<SubmittedWorkDaysForEmployees> workDaysStatistics;
         startDate = startDate == null ? CRUDFreezeService.getCacheableLastFreeze().getFreezeDate() : startDate;
-        if (currentSessionUserPrincipal.isAdmin()) {
-            workDaysStatistics = trackUnitService.getSubmittedHoursForUser(startDate, endDate);
+        if (currentSessionEmployeePrincipal.isAdmin()) {
+            workDaysStatistics = trackUnitService.getSubmittedHoursForEmployee(startDate, endDate);
         } else {
-            final Set<Integer> projectIds = currentSessionUserPrincipal.getProjectIdsByProjectRole(ProjectRoleEnum.MANAGER);
+            final Set<Integer> projectIds = currentSessionEmployeePrincipal.getProjectIdsByProjectRole(ProjectRoleEnum.MANAGER);
             if (projectIds.isEmpty()) {
-                throw new ForbiddenException("User has not admin or manager role in any project; userId = "
-                        + currentSessionUserPrincipal.getId() + ".");
+                throw new ForbiddenException("Employee has not admin or manager role in any project; employeeId = "
+                        + currentSessionEmployeePrincipal.getId() + ".");
             } else {
-                workDaysStatistics = trackUnitService.getSubmittedHoursForUser(projectIds, startDate, endDate);
+                workDaysStatistics = trackUnitService.getSubmittedHoursForEmployee(projectIds, startDate, endDate);
             }
         }
 
@@ -145,17 +145,17 @@ public class ApprovalRestController {
 
     @PreAuthorize("getPrincipal().isManager() or getPrincipal().isAdmin()")
     @PostMapping("/approve")
-    public void approveHours(@CurrentSessionUserPrincipal SessionUserPrincipal currentSessionUserPrincipal,
+    public void approveHours(@CurrentSessionEmployeePrincipal SessionEmployeePrincipal currentSessionEmployeePrincipal,
                              @Valid @RequestBody SubmittedHoursApproveDto approveDto) {
         List<Long> trackUnitIds = approveDto.getTrackUnitIds();
-        if (currentSessionUserPrincipal.isAdmin()) {
+        if (currentSessionEmployeePrincipal.isAdmin()) {
             trackUnitService.approve(trackUnitIds);
         } else {
-            Set<Integer> projectIds = currentSessionUserPrincipal.getProjectIdsByProjectRole(ProjectRoleEnum.MANAGER);
+            Set<Integer> projectIds = currentSessionEmployeePrincipal.getProjectIdsByProjectRole(ProjectRoleEnum.MANAGER);
             Set<Integer> trackUnitProjectIds = trackUnitService.getProjectIdsForTrackUnits(trackUnitIds);
             if (!trackUnitProjectIds.isEmpty() && !projectIds.containsAll(trackUnitProjectIds)) {
-                throw new ForbiddenException("User has not admin or manager role in projects of specified track units; " +
-                        "userId = " + currentSessionUserPrincipal.getId() + ", trackUnitProjectIds = "
+                throw new ForbiddenException("Employee has not admin or manager role in projects of specified track units; " +
+                        "employeeId = " + currentSessionEmployeePrincipal.getId() + ", trackUnitProjectIds = "
                         + trackUnitProjectIds + ".");
             }
             if (!trackUnitProjectIds.isEmpty()) {
@@ -166,17 +166,17 @@ public class ApprovalRestController {
 
     @PreAuthorize("getPrincipal().isManager() or getPrincipal().isAdmin()")
     @PostMapping("/reject")
-    public void rejectHours(@CurrentSessionUserPrincipal SessionUserPrincipal currentSessionUserPrincipal,
+    public void rejectHours(@CurrentSessionEmployeePrincipal SessionEmployeePrincipal currentSessionEmployeePrincipal,
                             @Valid @RequestBody SubmittedHoursRejectDto rejectDto) {
         List<Long> trackUnitIds = rejectDto.getTrackUnitIds();
-        if (currentSessionUserPrincipal.isAdmin()) {
+        if (currentSessionEmployeePrincipal.isAdmin()) {
             trackUnitService.reject(trackUnitIds, rejectDto.getRejectReason());
         } else {
-            Set<Integer> projectIds = currentSessionUserPrincipal.getProjectIdsByProjectRole(ProjectRoleEnum.MANAGER);
+            Set<Integer> projectIds = currentSessionEmployeePrincipal.getProjectIdsByProjectRole(ProjectRoleEnum.MANAGER);
             Set<Integer> trackUnitProjectIds = trackUnitService.getProjectIdsForTrackUnits(trackUnitIds);
             if (!trackUnitProjectIds.isEmpty() && !projectIds.containsAll(trackUnitProjectIds)) {
-                throw new ForbiddenException("User has not admin or manager role in projects of specified track units; " +
-                        "userId = " + currentSessionUserPrincipal.getId() + ", trackUnitProjectIds = "
+                throw new ForbiddenException("Employee has not admin or manager role in projects of specified track units; " +
+                        "employeeId = " + currentSessionEmployeePrincipal.getId() + ", trackUnitProjectIds = "
                         + trackUnitProjectIds + ".");
             }
             if (!trackUnitProjectIds.isEmpty()) {
@@ -186,10 +186,10 @@ public class ApprovalRestController {
     }
 
     private SubmittedHoursByWeekAndProjectDto createSubmittedHoursByWeekAndProject(TrackUnit trackUnit) {
-        User user = trackUnit.getUser();
+        Employee employee = trackUnit.getEmployee();
         Task task = trackUnit.getTask();
-        return new SubmittedHoursByWeekAndProjectDto(trackUnit.getId(), user.getId(), user.getFirstName(),
-                user.getLastName(), task.getId(), task.getName(), trackUnit.getHours(), trackUnit.getStatus(),
+        return new SubmittedHoursByWeekAndProjectDto(trackUnit.getId(), employee.getId(), employee.getFirstName(),
+                employee.getLastName(), task.getId(), task.getName(), trackUnit.getHours(), trackUnit.getStatus(),
                 trackUnit.isBillable(), trackUnit.getWorkDay().toLocalDate(), trackUnit.getComment());
     }
 

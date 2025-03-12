@@ -14,13 +14,13 @@ import java.util.Map;
 public class NoticeData {
     private NoticeProject project;
 
-    private NoticeUser user;
+    private NoticeEmployee employee;
 
     private NoticeTask task;
 
     private NoticeTrackUnitReject unit;
 
-    private NoticeNumberUsersHours usersHours;
+    private NoticeNumberEmployeesHours employeesHours;
 
     private Map<String, NoticeChanges> changes;
 
@@ -32,17 +32,17 @@ public class NoticeData {
         this.project = project;
     }
 
-    public NoticeData(NoticeUser user) {
-        this.user = user;
+    public NoticeData(NoticeEmployee employee) {
+        this.employee = employee;
     }
 
-    public NoticeData(NoticeProject project, NoticeUser user) {
+    public NoticeData(NoticeProject project, NoticeEmployee employee) {
         this.project = project;
-        this.user = user;
+        this.employee = employee;
     }
 
-    public NoticeData(NoticeNumberUsersHours usersHours) {
-        this.usersHours = usersHours;
+    public NoticeData(NoticeNumberEmployeesHours employeesHours) {
+        this.employeesHours = employeesHours;
     }
 
     public NoticeData(NoticeProject project, NoticeTask task, NoticeTrackUnitReject unit) {

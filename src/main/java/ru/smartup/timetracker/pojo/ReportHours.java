@@ -16,11 +16,11 @@ public class ReportHours {
 
     private String taskName;
 
-    private int userId;
+    private int employeeId;
 
-    private String userFirstName;
+    private String employeeFirstName;
 
-    private String userLastName;
+    private String employeeLastName;
 
     private float billableHours;
 

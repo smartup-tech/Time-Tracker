@@ -13,8 +13,8 @@ import ru.smartup.timetracker.entity.field.enumerated.ProductionCalendarDayEnum;
 import ru.smartup.timetracker.entity.Task;
 import ru.smartup.timetracker.entity.TrackUnit;
 import ru.smartup.timetracker.entity.field.enumerated.TrackUnitStatusEnum;
-import ru.smartup.timetracker.pojo.SubmittedWorkDaysForUsers;
-import ru.smartup.timetracker.pojo.TrackedProjectTaskForUser;
+import ru.smartup.timetracker.pojo.SubmittedWorkDaysForEmployees;
+import ru.smartup.timetracker.pojo.TrackedProjectTaskForEmployee;
 import ru.smartup.timetracker.utils.DateUtils;
 
 import java.sql.Date;
@@ -25,7 +25,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public class EntityDtoConverter {
-    public static TrackUnitTableDto getTrackUnitTableDto(int userId, List<TrackUnit> trackUnitList, List<ProductionCalendarDay> calendarDays, LocalDate firstDayOfWeek,
+    public static TrackUnitTableDto getTrackUnitTableDto(int employeeId, List<TrackUnit> trackUnitList, List<ProductionCalendarDay> calendarDays, LocalDate firstDayOfWeek,
                                                          ModelMapper modelMapper, FreezeRecord freezeRecord) {
         List<TrackUnitTableDayDto> days = getDayOfWeekInfo(calendarDays, firstDayOfWeek, freezeRecord);
 
@@ -43,16 +43,16 @@ public class EntityDtoConverter {
         mapTrackUnitListByProjectIdAndTaskId.forEach((projectId, taskMap) ->
                 taskMap.forEach((taskId, trackUnits) -> {
                     TrackUnit firstTrackUnitInList = trackUnits.get(0);
-                    trackUnitTableDto.getData().add(getTrackUnitRowDto(userId, firstTrackUnitInList.getProject(),
+                    trackUnitTableDto.getData().add(getTrackUnitRowDto(employeeId, firstTrackUnitInList.getProject(),
                             firstTrackUnitInList.getTask(), trackUnits, firstDayOfWeek, modelMapper, freezeRecord, false));
                 })
         );
         return trackUnitTableDto;
     }
 
-    public static TrackUnitTableDto getTrackUnitTableDto(int userId, List<TrackUnit> trackUnitList, List<ProductionCalendarDay> calendarDays, LocalDate firstDayOfWeek,
-                                                         ModelMapper modelMapper, FreezeRecord freezeRecord, List<TrackedProjectTaskForUser> observedTask) {
-        final TrackUnitTableDto trackUnitTableDto = getTrackUnitTableDto(userId, trackUnitList, calendarDays, firstDayOfWeek, modelMapper, freezeRecord);
+    public static TrackUnitTableDto getTrackUnitTableDto(int employeeId, List<TrackUnit> trackUnitList, List<ProductionCalendarDay> calendarDays, LocalDate firstDayOfWeek,
+                                                         ModelMapper modelMapper, FreezeRecord freezeRecord, List<TrackedProjectTaskForEmployee> observedTask) {
+        final TrackUnitTableDto trackUnitTableDto = getTrackUnitTableDto(employeeId, trackUnitList, calendarDays, firstDayOfWeek, modelMapper, freezeRecord);
 
         final Set<Long> taskIds = trackUnitList
                 .stream()
@@ -64,7 +64,7 @@ public class EntityDtoConverter {
                     if (!taskIds.contains(projectTask.getTaskId())) {
                         final TreeMap<String, TrackUnitCellDto> trackUnitCellDtoMap = new TreeMap<>();
                         trackUnitTableDto.getData().add(
-                                getTrackUnitRowDtoWithZeroHours(userId,
+                                getTrackUnitRowDtoWithZeroHours(employeeId,
                                         projectTask.getProjectId(), projectTask.getProjectName(),
                                         projectTask.getTaskId(), projectTask.getTaskName(),
                                         firstDayOfWeek, freezeRecord,
@@ -87,10 +87,10 @@ public class EntityDtoConverter {
         return trackUnitTableDto;
     }
 
-    public static TrackUnitRowDto getTrackUnitRowDto(int userId, Project project, Task task, List<TrackUnit> trackUnitList,
+    public static TrackUnitRowDto getTrackUnitRowDto(int employeeId, Project project, Task task, List<TrackUnit> trackUnitList,
                                                      LocalDate firstDayOfWeek, ModelMapper modelMapper, FreezeRecord freezeRecord, boolean observed) {
         final TreeMap<String, TrackUnitCellDto> trackUnitCellDtoMap = new TreeMap<>();
-        TrackUnitRowDto trackUnitRowDto = getTrackUnitRowDtoWithZeroHours(userId, project, task, firstDayOfWeek, freezeRecord, observed, false, trackUnitCellDtoMap);
+        TrackUnitRowDto trackUnitRowDto = getTrackUnitRowDtoWithZeroHours(employeeId, project, task, firstDayOfWeek, freezeRecord, observed, false, trackUnitCellDtoMap);
 
         trackUnitList.forEach(trackUnit -> {
             TrackUnitCellDto trackUnitCellDto = modelMapper.map(trackUnit, TrackUnitCellDto.class);
@@ -104,7 +104,7 @@ public class EntityDtoConverter {
         return trackUnitRowDto;
     }
 
-    private static TrackUnitRowDto getTrackUnitRowDtoWithZeroHours(final int userId, final Project project, final Task task,
+    private static TrackUnitRowDto getTrackUnitRowDtoWithZeroHours(final int employeeId, final Project project, final Task task,
                                                                    final LocalDate firstDayOfWeek, final FreezeRecord freezeRecord,
                                                                    final boolean observed, final boolean billable, final TreeMap<String, TrackUnitCellDto> trackUnitCellDtoMap) {
         for (int i = 0; i < DateUtils.DAYS_IN_WEEK; i++) {
@@ -118,7 +118,7 @@ public class EntityDtoConverter {
         }
 
         TrackUnitRowDto trackUnitRowDto = new TrackUnitRowDto();
-        trackUnitRowDto.setUserId(userId);
+        trackUnitRowDto.setEmployeeId(employeeId);
         trackUnitRowDto.setProjectId(project.getId());
         trackUnitRowDto.setProjectName(project.getName());
         trackUnitRowDto.setTaskId(task.getId());
@@ -129,11 +129,11 @@ public class EntityDtoConverter {
         return trackUnitRowDto;
     }
 
-    private static TrackUnitRowDto getTrackUnitRowDtoWithZeroHours(final int userId, final int projectId, final String projectName,
+    private static TrackUnitRowDto getTrackUnitRowDtoWithZeroHours(final int employeeId, final int projectId, final String projectName,
                                                                    final long taskId, final String taskName, final LocalDate firstDayOfWeek, final FreezeRecord freezeRecord,
                                                                    final boolean observed, final boolean billable, final TreeMap<String, TrackUnitCellDto> trackUnitCellDtoMap) {
         return getTrackUnitRowDtoWithZeroHours(
-                userId,
+                employeeId,
                 new Project(projectId, projectName),
                 new Task(taskId, taskName),
                 firstDayOfWeek,
@@ -190,10 +190,10 @@ public class EntityDtoConverter {
         dayInfo.setStandardHours(8);
     }
 
-    public static SubmittedWorkDaysTableDto getSubmittedWorkDaysTableDto(final List<SubmittedWorkDaysForUsers> submittedHours, final List<ProductionCalendarDay> calendarDays) {
+    public static SubmittedWorkDaysTableDto getSubmittedWorkDaysTableDto(final List<SubmittedWorkDaysForEmployees> submittedHours, final List<ProductionCalendarDay> calendarDays) {
         final List<java.util.Date> dates = submittedHours
                 .stream()
-                .map(SubmittedWorkDaysForUsers::getTrackUnitWorkDay)
+                .map(SubmittedWorkDaysForEmployees::getTrackUnitWorkDay)
                 .sorted(Comparator.naturalOrder())
                 .collect(Collectors.toList());
         if (dates.isEmpty()) {
@@ -235,19 +235,19 @@ public class EntityDtoConverter {
         return days;
     }
 
-    private static List<SubmittedWorkDaysTableUnitDto> getSubmittedWorkDaysTableUnitDto(final List<SubmittedWorkDaysForUsers> submittedHours) {
-        final Map<Integer, Map<Long, List<SubmittedWorkDaysForUsers>>> mapSubmittedWorkDayHoursByUserIdAndTaskId = submittedHours.stream()
-                .sorted(Comparator.comparing(SubmittedWorkDaysForUsers::getUserId)
-                        .thenComparing(SubmittedWorkDaysForUsers::getProjectId)
-                        .thenComparing(SubmittedWorkDaysForUsers::getTaskId)
-                        .thenComparing(SubmittedWorkDaysForUsers::getTrackUnitWorkDay))
-                .collect(Collectors.groupingBy(SubmittedWorkDaysForUsers::getUserId,
-                        Collectors.groupingBy(SubmittedWorkDaysForUsers::getTaskId, Collectors.toList())));
+    private static List<SubmittedWorkDaysTableUnitDto> getSubmittedWorkDaysTableUnitDto(final List<SubmittedWorkDaysForEmployees> submittedHours) {
+        final Map<Integer, Map<Long, List<SubmittedWorkDaysForEmployees>>> mapSubmittedWorkDayHoursByEmployeeIdAndTaskId = submittedHours.stream()
+                .sorted(Comparator.comparing(SubmittedWorkDaysForEmployees::getEmployeeId)
+                        .thenComparing(SubmittedWorkDaysForEmployees::getProjectId)
+                        .thenComparing(SubmittedWorkDaysForEmployees::getTaskId)
+                        .thenComparing(SubmittedWorkDaysForEmployees::getTrackUnitWorkDay))
+                .collect(Collectors.groupingBy(SubmittedWorkDaysForEmployees::getEmployeeId,
+                        Collectors.groupingBy(SubmittedWorkDaysForEmployees::getTaskId, Collectors.toList())));
 
         final List<SubmittedWorkDaysTableUnitDto> results = new ArrayList<>();
 
-        mapSubmittedWorkDayHoursByUserIdAndTaskId.forEach((userId, mapSubmittedWorkDayHoursByTaskId) -> {
-            final SubmittedWorkDaysTableUnitDto submittedWorkDaysTableUnitDto = new SubmittedWorkDaysTableUnitDto(userId);
+        mapSubmittedWorkDayHoursByEmployeeIdAndTaskId.forEach((employeeId, mapSubmittedWorkDayHoursByTaskId) -> {
+            final SubmittedWorkDaysTableUnitDto submittedWorkDaysTableUnitDto = new SubmittedWorkDaysTableUnitDto(employeeId);
 
             final List<SubmittedWorkDaysTableProjectUnitDto> projectUnitDtos = new ArrayList<>();
             final Map<java.util.Date, Float> dateToHours = new TreeMap<>();

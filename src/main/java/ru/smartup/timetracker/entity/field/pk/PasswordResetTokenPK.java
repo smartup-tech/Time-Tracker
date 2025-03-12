@@ -10,6 +10,6 @@ import java.io.Serializable;
 @AllArgsConstructor
 @EqualsAndHashCode
 public class PasswordResetTokenPK implements Serializable {
-    private int userId;
+    private int employeeId;
     private String token;
 }

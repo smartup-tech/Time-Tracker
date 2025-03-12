@@ -33,7 +33,7 @@ public class ProductionCalendarController {
     }
 
     @GetMapping
-    @PreAuthorize("getPrincipal().isUser() or getPrincipal().isAdmin() or getPrincipal().isReportReceiver()")
+    @PreAuthorize("getPrincipal().isEmployee() or getPrincipal().isAdmin() or getPrincipal().isReportReceiver()")
     public List<ProductionCalendarDayDto> getProductionCalendarByYear(@RequestParam(name = "year") Optional<Integer> yearParam) {
         final int year = yearParam.orElseGet(() -> LocalDate.now().getYear());
         return productionCalendarService.getAllProductionCalendarDayByYear(year)

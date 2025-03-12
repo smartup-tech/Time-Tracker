@@ -7,10 +7,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.smartup.timetracker.dto.password.recovery.request.PasswordResetDto;
 import ru.smartup.timetracker.entity.PasswordResetToken;
-import ru.smartup.timetracker.entity.User;
+import ru.smartup.timetracker.entity.Employee;
 import ru.smartup.timetracker.exception.InvalidTokenException;
 import ru.smartup.timetracker.repository.PasswordResetTokenRepository;
-import ru.smartup.timetracker.repository.UserRepository;
+import ru.smartup.timetracker.repository.EmployeeRepository;
 import ru.smartup.timetracker.utils.CommonStringUtils;
 
 import java.sql.Timestamp;
@@ -29,19 +29,19 @@ public class PasswordResetTokenService {
     private final long passwordRecoveryTokenTtlInHours;
     private final PasswordEncoder passwordEncoder;
     private final PasswordResetTokenRepository passwordResetTokenRepository;
-    private final UserRepository userRepository;
+    private final EmployeeRepository employeeRepository;
 
     public PasswordResetTokenService(@Value("${token.registration.ttl}") long passwordRegistrationTokenTtl,
                                      @Value("${token.recovery.ttl}") long passwordRecoveryTokenTtl,
                                      final PasswordEncoder passwordEncoder, PasswordResetTokenRepository passwordResetTokenRepository,
-                                     UserRepository userRepository) {
+                                     EmployeeRepository employeeRepository) {
         this.passwordRegistrationTokenTtl = passwordRegistrationTokenTtl;
         this.passwordRecoveryTokenTtl = passwordRecoveryTokenTtl;
         this.passwordRegistrationTokenTtlInHours = passwordRegistrationTokenTtl / SECONDS_IN_HOUR;
         this.passwordRecoveryTokenTtlInHours = passwordRecoveryTokenTtl / SECONDS_IN_HOUR;
         this.passwordEncoder = passwordEncoder;
         this.passwordResetTokenRepository = passwordResetTokenRepository;
-        this.userRepository = userRepository;
+        this.employeeRepository = employeeRepository;
     }
 
     public Optional<PasswordResetToken> getPasswordResetToken(String token) {
@@ -49,19 +49,19 @@ public class PasswordResetTokenService {
     }
 
     @Transactional
-    public String createPasswordResetTokenForRegistration(int userId) {
-        return createPasswordResetToken(userId, passwordRegistrationTokenTtl);
+    public String createPasswordResetTokenForRegistration(int employeeId) {
+        return createPasswordResetToken(employeeId, passwordRegistrationTokenTtl);
     }
 
     @Transactional
-    public String createPasswordResetTokenForRecovery(int userId) {
-        return createPasswordResetToken(userId, passwordRecoveryTokenTtl);
+    public String createPasswordResetTokenForRecovery(int employeeId) {
+        return createPasswordResetToken(employeeId, passwordRecoveryTokenTtl);
     }
 
-    private String createPasswordResetToken(int userId, long ttl) {
+    private String createPasswordResetToken(int employeeId, long ttl) {
         String token = UUID.randomUUID().toString().replaceAll(CommonStringUtils.DASH, StringUtils.EMPTY);
         Instant tokenExpiry = Instant.now().plus(ttl, ChronoUnit.SECONDS);
-        PasswordResetToken passwordResetToken = new PasswordResetToken(userId,
+        PasswordResetToken passwordResetToken = new PasswordResetToken(employeeId,
                 CommonStringUtils.hashSHA256(token), Timestamp.from(tokenExpiry));
         passwordResetTokenRepository.save(passwordResetToken);
         return token;
@@ -72,7 +72,7 @@ public class PasswordResetTokenService {
         passwordResetTokenRepository.delete(passwordResetToken);
     }
 
-    public Optional<User> resetPassword(final PasswordResetDto passwordResetDto) {
+    public Optional<Employee> resetPassword(final PasswordResetDto passwordResetDto) {
         Optional<PasswordResetToken> existPasswordResetToken =
                 this.getPasswordResetToken(CommonStringUtils.hashSHA256(passwordResetDto.getToken()));
 
@@ -87,16 +87,16 @@ public class PasswordResetTokenService {
             throw new InvalidTokenException("Password reset token has expired.");
         }
 
-        return updatePassword(passwordResetToken.getUserId(), passwordResetDto.getNewPassword());
+        return updatePassword(passwordResetToken.getEmployeeId(), passwordResetDto.getNewPassword());
     }
 
     @Transactional
-    public Optional<User> updatePassword(int userId, String password) {
+    public Optional<Employee> updatePassword(int employeeId, String password) {
         final String passwordHash = passwordEncoder.encode(password);
 
-        passwordResetTokenRepository.deleteAllByUserId(userId);
+        passwordResetTokenRepository.deleteAllByEmployeeId(employeeId);
 
-        return userRepository.updatePassword(userId, passwordHash);
+        return employeeRepository.updatePassword(employeeId, passwordHash);
     }
 
     public long getPasswordRecoveryTokenTtlInHours() {

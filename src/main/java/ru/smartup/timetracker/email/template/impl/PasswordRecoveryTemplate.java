@@ -22,7 +22,7 @@ public class PasswordRecoveryTemplate extends BaseEmailTemplate {
 
     private EmailXmlTemplate getPasswordRecoveryTemplate(final NoticePersonalToken notice) {
         final Map<String, Object> templateProperties = Map.of(
-                EmailConstant.PropertyName.NAME_PROPERTY, notice.getUsername(),
+                EmailConstant.PropertyName.NAME_PROPERTY, notice.getEmployeeName(),
                 EmailConstant.PropertyName.LINK_PROPERTY, passwordRecoveryLink + notice.getToken(),
                 EmailConstant.PropertyName.TTL_PROPERTY, notice.getTtlInHours() == 1 ? notice.getTtlInHours() + EmailConstant.HOUR : notice.getTtlInHours() + EmailConstant.HOURS
         );

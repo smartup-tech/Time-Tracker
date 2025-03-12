@@ -25,8 +25,8 @@ public class Notice {
     @Enumerated(EnumType.STRING)
     private NoticeTypeEnum type;
 
-    @Column(name = "user_id")
-    private int userId;
+    @Column(name = "employee_id")
+    private int employeeId;
 
     @Column(name = "text")
     private String text;
@@ -38,6 +38,9 @@ public class Notice {
     @Column(name = "read")
     private boolean read;
 
+    @Column(name = "deleted")
+    private boolean deleted;
+
     @Column(name = "created_by", updatable = false)
     private int createdBy;
 
@@ -47,9 +50,9 @@ public class Notice {
     @Column(name = "last_modified_date", insertable = false, updatable = false)
     private Timestamp lastModifiedDate;
 
-    public Notice(NoticeTypeEnum type, int userId, String text, Object data, int createdBy) {
+    public Notice(NoticeTypeEnum type, int employeeId, String text, Object data, int createdBy) {
         this.type = type;
-        this.userId = userId;
+        this.employeeId = employeeId;
         this.text = text;
         this.data = data;
         this.createdBy = createdBy;

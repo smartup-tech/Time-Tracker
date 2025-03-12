@@ -10,13 +10,13 @@ import java.util.List;
 @NoArgsConstructor
 @Data
 public class SubmittedWorkDaysTableUnitDto {
-    private int userId;
+    private int employeeId;
     private String firstName;
     private String lastName;
     private List<SubmittedSummaryWorkDay> summaryTrackUnits;
     private List<SubmittedWorkDaysTableProjectUnitDto> projectTrackUnits;
 
-    public SubmittedWorkDaysTableUnitDto(final int userId) {
-        this.userId = userId;
+    public SubmittedWorkDaysTableUnitDto(final int employeeId) {
+        this.employeeId = employeeId;
     }
 }

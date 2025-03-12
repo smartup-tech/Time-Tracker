@@ -10,12 +10,12 @@ import ru.smartup.timetracker.core.CacheNames;
 import ru.smartup.timetracker.dto.freeze.response.FreezeRecordDto;
 import ru.smartup.timetracker.entity.FreezeRecord;
 import ru.smartup.timetracker.entity.field.enumerated.FreezeRecordStatusEnum;
+import ru.smartup.timetracker.pojo.freeze.UnfreezeDateInterval;
 import ru.smartup.timetracker.repository.FreezeRecordRepository;
 
 import java.time.LocalDate;
+import java.util.Date;
 import java.util.List;
-import java.util.Map;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @RequiredArgsConstructor
@@ -84,11 +84,8 @@ public class CRUDFreezeService {
     }
 
 
-    public List<LocalDate> getBoundaryFreezeRecord(final FreezeRecord freezeRecord) {
-        return freezeRecordRepository.findBoundaryByFreezeDate(freezeRecord.getFreezeDate())
-                .stream()
-                .map(date -> date == null ? null : date.toLocalDate())
-                .collect(Collectors.toList());
+    public UnfreezeDateInterval getBoundaryFreezeRecord(final FreezeRecord freezeRecord) {
+        return freezeRecordRepository.findBoundaryByFreezeDate(freezeRecord.getFreezeDate());
     }
 
     public void deleteFreezeRecord(final FreezeRecord freezeRecord) {

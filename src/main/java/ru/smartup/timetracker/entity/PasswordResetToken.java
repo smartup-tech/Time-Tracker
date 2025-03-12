@@ -16,8 +16,8 @@ import java.sql.Timestamp;
 @IdClass(PasswordResetTokenPK.class)
 public class PasswordResetToken {
     @Id
-    @Column(name = "user_id")
-    private int userId;
+    @Column(name = "employee_id")
+    private int employeeId;
     @Id
     @Column(name = "token")
     private String token;

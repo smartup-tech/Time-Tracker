@@ -1,12 +1,18 @@
 package ru.smartup.timetracker.pojo.notice;
 
-import lombok.AllArgsConstructor;
-import lombok.Getter;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
-import java.time.ZonedDateTime;
 
-@AllArgsConstructor
-@Getter
+
+@JsonInclude(JsonInclude.Include.NON_NULL)
+@NoArgsConstructor
+@Data
 public class NoticeFreeze {
     private String date;
+
+    public NoticeFreeze(String date) {
+        this.date = date;
+    }
 }

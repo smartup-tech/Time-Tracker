@@ -10,7 +10,7 @@ import java.util.Set;
 @Data
 public class TrackUnitSubmitDto {
     @Min(0)
-    private int userId;
+    private int employeeId;
 
     @NotEmpty
     private Set<Date> weeks;

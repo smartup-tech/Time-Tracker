@@ -11,7 +11,7 @@ public class EmailConstant {
     }
     public static class SubjectName {
         public static final String PASSWORD_RECOVERY_SUBJECT = "Восстановление пароля";
-        public static final String USER_REGISTRATION_SUBJECT = "Добро пожаловать";
+        public static final String EMPLOYEE_REGISTRATION_SUBJECT = "Добро пожаловать";
         public static final String FREEZE_SUBJECT = "Блокировка";
         public static final String SUCCESS_FREEZE_SUBJECT = "Блокировка успешно завершена";
         public static final String UN_FREEZE_SUBJECT = "Снятие блокировки";
